@@ -415,7 +415,7 @@ export class RestAPI {
         <div class="install-code">
           <button class="install-copy" onclick="copyCode('oneliner')"><i data-lucide="clipboard"></i> Copy</button>
           <span class="comment"># Works everywhere. Installs everything.</span><br>
-          <span class="cmd">curl</span> -fsSL https://nexusmind-api-production.up.railway.app/install.sh | bash
+          <span class="cmd">curl</span> -fsSL https://github.com/morningstarnasser/Nexusmindai/install.sh | bash
         </div>
       </div>
     </div>
@@ -684,7 +684,7 @@ export class RestAPI {
         npm: 'npx create-nexusmind@latest my-agents && cd my-agents && npm run dev',
         clone: 'git clone https://github.com/morningstarnasser/Nexusmindai.git && cd Nexusmindai && npm install && npm run build && npm run dev',
         docker: 'docker compose up -d',
-        oneliner: 'curl -fsSL https://nexusmind-api-production.up.railway.app/install.sh | bash'
+        oneliner: 'curl -fsSL https://github.com/morningstarnasser/Nexusmindai/install.sh | bash'
       };
       navigator.clipboard.writeText(codes[tab] || '');
       const btn = event.target.closest('.install-copy');
@@ -1183,16 +1183,15 @@ SLACK_APP_TOKEN=<span class="string">xapp-your-app-token</span></pre>
       </section>
 
       <!-- Deployment -->
-      <section class="doc-section" id="deploy-railway">
-        <h2><i data-lucide="cloud"></i> Deploy to Railway</h2>
-        <p>NexusMind can be deployed to Railway with one click:</p>
+      <section class="doc-section" id="deploy">
+        <h2><i data-lucide="cloud"></i> Deployment</h2>
+        <p>Deploy Nexusmindai using Docker or any Node.js hosting:</p>
         <ol>
-          <li>Fork the <a href="https://github.com/morningstarnasser/Nexusmindai">GitHub repository</a></li>
-          <li>Create a new Railway project and connect it to your fork</li>
-          <li>Set environment variables in Railway dashboard</li>
-          <li>Railway auto-builds on every push to <code>main</code></li>
+          <li>Clone the <a href="https://github.com/morningstarnasser/Nexusmindai">GitHub repository</a></li>
+          <li>Run <code>npm install && npm run build</code></li>
+          <li>Set environment variables from <code>.env.example</code></li>
+          <li>Run <code>npm start</code></li>
         </ol>
-        <div class="callout callout-success"><i data-lucide="check-circle"></i> The production instance is live at <a href="https://nexusmind-api-production.up.railway.app">nexusmind-api-production.up.railway.app</a></div>
       </section>
 
       <section class="doc-section" id="deploy-docker">
