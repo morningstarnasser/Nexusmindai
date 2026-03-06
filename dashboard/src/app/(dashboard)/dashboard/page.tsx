@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Activity, AlertCircle, CheckCircle2, Clock, Zap, TrendingUp } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const dummyTokenData = [
   { time: '00:00', tokens: 1200 },
@@ -33,7 +33,7 @@ const dummyAgents = [
 ];
 
 export default function Dashboard() {
-  const [systemStatus, setSystemStatus] = useState<'healthy' | 'warning' | 'error'>('healthy');
+  const [systemStatus] = useState<'healthy' | 'warning' | 'error'>('healthy');
   const [heartbeat, setHeartbeat] = useState<number>(8);
 
   useEffect(() => {

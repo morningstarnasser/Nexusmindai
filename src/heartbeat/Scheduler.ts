@@ -35,9 +35,9 @@ export class Scheduler {
   }
 
   /**
-   * Validate cron expression format
+   * Validate cron expression format.
    * Format: minute hour day month dayOfWeek
-   * Example: "0 */4 * * *" (every 4 hours)
+   * Example: "0 (star)/4 * * *" means every 4 hours
    */
   isValidCron(expression: string): boolean {
     try {

@@ -16,14 +16,20 @@ interface LogEntry {
   data?: unknown;
 }
 
-class Logger {
+export class Logger {
+  private prefix: string;
   private level: LogLevel = LogLevel.INFO;
   private history: LogEntry[] = [];
   private maxHistory: number = 1000;
 
-  constructor(initialLevel?: LogLevel) {
-    if (initialLevel !== undefined) {
-      this.level = initialLevel;
+  constructor(prefixOrLevel?: string | LogLevel) {
+    if (typeof prefixOrLevel === 'string') {
+      this.prefix = prefixOrLevel;
+    } else {
+      this.prefix = '';
+      if (prefixOrLevel !== undefined) {
+        this.level = prefixOrLevel;
+      }
     }
 
     // Set level from environment
@@ -74,7 +80,8 @@ class Logger {
     if (level >= this.level) {
       const levelName = LogLevel[level];
       const timestamp = new Date().toISOString();
-      const logMessage = `[${timestamp}] ${levelName}: ${message}`;
+      const tag = this.prefix ? `[${this.prefix}] ` : '';
+      const logMessage = `[${timestamp}] ${levelName}: ${tag}${message}`;
 
       // Output to console
       if (level === LogLevel.ERROR) {
@@ -140,9 +147,8 @@ class Logger {
    * Get logs by level
    */
   getLogsByLevel(level: LogLevel): LogEntry[] {
-    return this.history.filter(entry =>
-      LogLevel[level as unknown as string] === entry.level
-    );
+    const levelName = LogLevel[level];
+    return this.history.filter(entry => entry.level === levelName);
   }
 
   /**

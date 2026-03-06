@@ -41,7 +41,8 @@ workflowsRouter.post('/', (req: Request, res: Response) => {
     const { name, description, steps, trigger } = (req as any).body;
 
     if (!name) {
-      return res.status(400).json({ error: 'Workflow name is required' });
+      res.status(400).json({ error: 'Workflow name is required' });
+      return;
     }
 
     const workflowId = `workflow-${Date.now()}`;
@@ -72,18 +73,29 @@ workflowsRouter.post('/', (req: Request, res: Response) => {
 // POST /:id/run - Execute workflow
 workflowsRouter.post('/:id/run', (req: Request, res: Response) => {
   try {
-    const workflow = workflows.get(req.params.id);
+    const workflowId = req.params.id as string;
+    const workflow = workflows.get(workflowId);
 
     if (!workflow) {
-      return res.status(404).json({ error: 'Workflow not found' });
+      res.status(404).json({ error: 'Workflow not found' });
+      return;
     }
 
     const runId = `run-${Date.now()}`;
     const { input } = (req as any).body;
 
-    const run = {
+    const run: {
+      id: string;
+      workflow_id: string;
+      input: any;
+      status: string;
+      started_at: string;
+      completed_at: string | null;
+      result: any;
+      errors: any[];
+    } = {
       id: runId,
-      workflow_id: req.params.id,
+      workflow_id: workflowId,
       input: input || {},
       status: 'running',
       started_at: new Date().toISOString(),
@@ -115,13 +127,15 @@ workflowsRouter.post('/:id/run', (req: Request, res: Response) => {
 // GET /:id/history - Get workflow execution history
 workflowsRouter.get('/:id/history', (req: Request, res: Response) => {
   try {
-    if (!workflows.has(req.params.id)) {
-      return res.status(404).json({ error: 'Workflow not found' });
+    const workflowId = req.params.id as string;
+    if (!workflows.has(workflowId)) {
+      res.status(404).json({ error: 'Workflow not found' });
+      return;
     }
 
     const limit = parseInt(req.query.limit as string) || 20;
     const history = Array.from(workflowRuns.values())
-      .filter((run) => run.workflow_id === req.params.id)
+      .filter((run) => run.workflow_id === workflowId)
       .sort(
         (a, b) =>
           new Date(b.started_at).getTime() - new Date(a.started_at).getTime()
@@ -129,7 +143,7 @@ workflowsRouter.get('/:id/history', (req: Request, res: Response) => {
       .slice(0, limit);
 
     res.json({
-      workflow_id: req.params.id,
+      workflow_id: workflowId,
       executions: history,
       total: history.length,
     });
@@ -141,15 +155,17 @@ workflowsRouter.get('/:id/history', (req: Request, res: Response) => {
 // GET /:id/status - Get workflow execution status
 workflowsRouter.get('/:id/status', (req: Request, res: Response) => {
   try {
-    const workflow = workflows.get(req.params.id);
+    const workflowId = req.params.id as string;
+    const workflow = workflows.get(workflowId);
 
     if (!workflow) {
-      return res.status(404).json({ error: 'Workflow not found' });
+      res.status(404).json({ error: 'Workflow not found' });
+      return;
     }
 
     // Get latest run
     const runs = Array.from(workflowRuns.values())
-      .filter((run) => run.workflow_id === req.params.id)
+      .filter((run) => run.workflow_id === workflowId)
       .sort(
         (a, b) =>
           new Date(b.started_at).getTime() - new Date(a.started_at).getTime()
@@ -158,7 +174,7 @@ workflowsRouter.get('/:id/status', (req: Request, res: Response) => {
     const latestRun = runs[0] || null;
 
     res.json({
-      workflow_id: req.params.id,
+      workflow_id: workflowId,
       name: workflow.name,
       status: workflow.status,
       executions: workflow.executions,

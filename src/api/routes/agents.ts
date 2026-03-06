@@ -48,7 +48,8 @@ agentsRouter.post('/', (req: Request, res: Response) => {
     const { name, config, skills } = (req as any).body;
 
     if (!name) {
-      return res.status(400).json({ error: 'Agent name is required' });
+      res.status(400).json({ error: 'Agent name is required' });
+      return;
     }
 
     const agentId = `agent-${Date.now()}`;
@@ -83,10 +84,11 @@ agentsRouter.post('/', (req: Request, res: Response) => {
 // GET /:id - Get agent details
 agentsRouter.get('/:id', (req: Request, res: Response) => {
   try {
-    const agent = agents.get(req.params.id);
+    const agent = agents.get(req.params.id as string);
 
     if (!agent) {
-      return res.status(404).json({ error: 'Agent not found' });
+      res.status(404).json({ error: 'Agent not found' });
+      return;
     }
 
     res.json(agent);
@@ -100,10 +102,12 @@ agentsRouter.get('/:id', (req: Request, res: Response) => {
 // PUT /:id - Update agent
 agentsRouter.put('/:id', (req: Request, res: Response) => {
   try {
-    const agent = agents.get(req.params.id);
+    const agentId = req.params.id as string;
+    const agent = agents.get(agentId);
 
     if (!agent) {
-      return res.status(404).json({ error: 'Agent not found' });
+      res.status(404).json({ error: 'Agent not found' });
+      return;
     }
 
     const { name, config, skills, status } = (req as any).body;
@@ -114,7 +118,7 @@ agentsRouter.put('/:id', (req: Request, res: Response) => {
     if (status) agent.status = status;
     agent.updated_at = new Date().toISOString();
 
-    agents.set(req.params.id, agent);
+    agents.set(agentId, agent);
 
     res.json({
       agent,
@@ -130,11 +134,13 @@ agentsRouter.put('/:id', (req: Request, res: Response) => {
 // DELETE /:id - Delete agent
 agentsRouter.delete('/:id', (req: Request, res: Response) => {
   try {
-    if (!agents.has(req.params.id)) {
-      return res.status(404).json({ error: 'Agent not found' });
+    const agentId = req.params.id as string;
+    if (!agents.has(agentId)) {
+      res.status(404).json({ error: 'Agent not found' });
+      return;
     }
 
-    agents.delete(req.params.id);
+    agents.delete(agentId);
 
     res.json({ message: 'Agent deleted successfully' });
   } catch (error) {
@@ -147,16 +153,19 @@ agentsRouter.delete('/:id', (req: Request, res: Response) => {
 // POST /:id/message - Send message to agent
 agentsRouter.post('/:id/message', (req: Request, res: Response) => {
   try {
-    const agent = agents.get(req.params.id);
+    const agentId = req.params.id as string;
+    const agent = agents.get(agentId);
 
     if (!agent) {
-      return res.status(404).json({ error: 'Agent not found' });
+      res.status(404).json({ error: 'Agent not found' });
+      return;
     }
 
     const { message, context } = (req as any).body;
 
     if (!message) {
-      return res.status(400).json({ error: 'Message is required' });
+      res.status(400).json({ error: 'Message is required' });
+      return;
     }
 
     agent.metrics.messages_processed++;
@@ -166,7 +175,7 @@ agentsRouter.post('/:id/message', (req: Request, res: Response) => {
     const messageId = `msg-${Date.now()}`;
     const response = {
       id: messageId,
-      agent_id: req.params.id,
+      agent_id: agentId,
       message,
       response: `Processed by ${agent.name}`,
       context: context || {},
@@ -186,10 +195,12 @@ agentsRouter.post('/:id/message', (req: Request, res: Response) => {
 // GET /:id/history - Get agent conversation history
 agentsRouter.get('/:id/history', (req: Request, res: Response) => {
   try {
-    const agent = agents.get(req.params.id);
+    const agentId = req.params.id as string;
+    const agent = agents.get(agentId);
 
     if (!agent) {
-      return res.status(404).json({ error: 'Agent not found' });
+      res.status(404).json({ error: 'Agent not found' });
+      return;
     }
 
     const limit = parseInt(req.query.limit as string) || 50;
@@ -198,14 +209,14 @@ agentsRouter.get('/:id/history', (req: Request, res: Response) => {
     const history = [
       {
         id: 'conv-1',
-        agent_id: req.params.id,
+        agent_id: agentId,
         messages: [],
         created_at: new Date().toISOString(),
       },
     ];
 
     res.json({
-      agent_id: req.params.id,
+      agent_id: agentId,
       conversations: history.slice(0, limit),
       total: history.length,
     });
@@ -219,14 +230,16 @@ agentsRouter.get('/:id/history', (req: Request, res: Response) => {
 // GET /:id/metrics - Get agent performance metrics
 agentsRouter.get('/:id/metrics', (req: Request, res: Response) => {
   try {
-    const agent = agents.get(req.params.id);
+    const agentId = req.params.id as string;
+    const agent = agents.get(agentId);
 
     if (!agent) {
-      return res.status(404).json({ error: 'Agent not found' });
+      res.status(404).json({ error: 'Agent not found' });
+      return;
     }
 
     const metrics = {
-      agent_id: req.params.id,
+      agent_id: agentId,
       ...agent.metrics,
       uptime_seconds: Math.random() * 10000,
       avg_response_time_ms: Math.random() * 1000,

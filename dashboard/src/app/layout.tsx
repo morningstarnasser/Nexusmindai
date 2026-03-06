@@ -1,15 +1,12 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import { Sidebar } from '@/components/sidebar';
-import { Header } from '@/components/header';
 
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'NexusMind Dashboard',
-  description: 'AI Agent Management and Orchestration Platform',
-  viewport: 'width=device-width, initial-scale=1',
+  title: 'NexusMind - Autonomous AI Agent Platform',
+  description: 'The ultimate autonomous AI agent platform. Deploy intelligent agents across Telegram, Discord, Slack, WhatsApp and 11+ platforms.',
   icons: {
     icon: '/favicon.ico',
   },
@@ -47,15 +44,7 @@ export default function RootLayout({
         `}</style>
       </head>
       <body className={`${inter.className} bg-slate-950 text-slate-50 antialiased`}>
-        <div className="flex h-screen bg-slate-950">
-          <Sidebar />
-          <div className="flex flex-col flex-1 overflow-hidden">
-            <Header />
-            <main className="flex-1 overflow-auto">
-              <div className="p-8">{children}</div>
-            </main>
-          </div>
-        </div>
+        {children}
       </body>
     </html>
   );

@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Settings, Lock, Link2, AlertCircle, Check } from 'lucide-react';
+import { Settings, Lock, Link2, AlertCircle } from 'lucide-react';
 import { useState } from 'react';
 
 const providerConfig = [

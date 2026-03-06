@@ -1,5 +1,5 @@
 import type { Request, Response, Router } from 'express';
-import { cpuUsage, totalmem, freemem } from 'os';
+import { cpus, totalmem, freemem } from 'os';
 
 let systemRouter: Router;
 
@@ -83,8 +83,8 @@ systemRouter.get('/metrics', (req: Request, res: Response) => {
         nodejs_version: process.version,
       },
       runtime: {
-        active_handles: process.activeHandleCount?.() || 0,
-        active_requests: process.activeRequestCount?.() || 0,
+        active_handles: (process as any)._getActiveHandles?.()?.length || 0,
+        active_requests: (process as any)._getActiveRequests?.()?.length || 0,
       },
     };
 
@@ -132,12 +132,14 @@ systemRouter.post('/restore', (req: Request, res: Response) => {
     const { backup_id } = (req as any).body;
 
     if (!backup_id) {
-      return res.status(400).json({ error: 'backup_id is required' });
+      res.status(400).json({ error: 'backup_id is required' });
+      return;
     }
 
     const backup = backups.get(backup_id);
     if (!backup) {
-      return res.status(404).json({ error: 'Backup not found' });
+      res.status(404).json({ error: 'Backup not found' });
+      return;
     }
 
     const restore = {
@@ -167,14 +169,16 @@ systemRouter.post('/restore', (req: Request, res: Response) => {
 // GET /backup/:id - Download backup
 systemRouter.get('/backup/:id', (req: Request, res: Response) => {
   try {
-    const backup = backups.get(req.params.id);
+    const backupId = req.params.id as string;
+    const backup = backups.get(backupId);
 
     if (!backup) {
-      return res.status(404).json({ error: 'Backup not found' });
+      res.status(404).json({ error: 'Backup not found' });
+      return;
     }
 
     res.setHeader('Content-Type', 'application/octet-stream');
-    res.setHeader('Content-Disposition', `attachment; filename="backup-${req.params.id}.tar.gz"`);
+    res.setHeader('Content-Disposition', `attachment; filename="backup-${backupId}.tar.gz"`);
     res.send(Buffer.from(JSON.stringify(backup)));
   } catch (error) {
     res.status(500).json({ error: (error as Error).message });

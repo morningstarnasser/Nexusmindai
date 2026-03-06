@@ -2,18 +2,18 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Bot, GitBranch, Brain, Zap, BarChart3, Settings, LogSquare, Menu, X } from 'lucide-react';
+import { Home, Bot, GitBranch, Brain, Zap, BarChart3, Settings, ScrollText, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 
 const navItems = [
-  { name: 'Home', href: '/', icon: Home },
+  { name: 'Home', href: '/dashboard', icon: Home },
   { name: 'Agents', href: '/agents', icon: Bot },
   { name: 'Workflows', href: '/workflows', icon: GitBranch },
   { name: 'Memory', href: '/memory', icon: Brain },
   { name: 'Skills', href: '/skills', icon: Zap },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
   { name: 'Settings', href: '/settings', icon: Settings },
-  { name: 'Logs', href: '/logs', icon: LogSquare },
+  { name: 'Logs', href: '/logs', icon: ScrollText },
 ];
 
 export function Sidebar() {

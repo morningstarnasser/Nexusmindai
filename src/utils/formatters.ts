@@ -3,7 +3,9 @@
  * Format messages for different platforms and content types
  */
 
-import { NexusMessage, Platform } from '../types/index';
+// NexusMessage extends the base Message with platform-specific fields
+type NexusMessage = any;
+type Platform = string;
 
 /**
  * Markdown formatter options

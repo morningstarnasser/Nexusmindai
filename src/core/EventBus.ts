@@ -27,11 +27,13 @@ export class EventBus extends EventEmitter {
     if (Array.isArray(event)) {
       for (const e of event) {
         this.registerHandler(e, handler);
+        super.on(e, handler);
       }
+      return this;
     } else {
       this.registerHandler(event, handler);
+      return super.on(event, handler);
     }
-    return super.on(event, handler);
   }
 
   /**

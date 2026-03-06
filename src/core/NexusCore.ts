@@ -252,7 +252,7 @@ export class NexusCore extends EventEmitter {
     });
 
     // Listen to event bus events
-    this.eventBus.on('*', (event: CoreEvent) => {
+    this.eventBus.on('*', (..._args: unknown[]) => {
       this.systemMetrics.eventsEmitted++;
     });
   }

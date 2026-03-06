@@ -42,6 +42,9 @@ export interface AgentConfig {
 
 export type AgentStatus = 'initialized' | 'running' | 'idle' | 'busy' | 'paused' | 'stopped' | 'error';
 
+// Agent is an alias for AgentConfig (used in many modules)
+export type Agent = AgentConfig;
+
 // Messages
 export interface Message {
   id: string;
@@ -215,6 +218,50 @@ export interface SystemStatus {
   agents: number;
   pendingTasks: number;
   metrics: HeartbeatMetrics;
+}
+
+// Re-export NexusMessage from message types
+export type { NexusMessage } from './message.js';
+
+// Adapter Configuration (used by platform adapters)
+export interface AdapterConfig {
+  credentials?: Record<string, any>;
+  [key: string]: unknown;
+}
+
+// Memory types used by MemoryManager and memory layers
+export type IMemoryTier = 'working' | 'short-term' | 'long-term' | 'deleted';
+
+export interface IMemoryEntry {
+  id: string;
+  content: string;
+  metadata: Record<string, unknown>;
+  timestamp: Date;
+  tier: IMemoryTier | string;
+  accessCount: number;
+}
+
+export interface ISearchResult {
+  entryId: string;
+  content: string;
+  relevanceScore: number;
+  sources: string[];
+  tier?: string;
+}
+
+export interface IMemoryStats {
+  timestamp: Date;
+  workingMemory: { count: number; sizeBytes: number };
+  shortTermMemory: { count: number; sizeBytes: number };
+  longTermMemory: { count: number; sizeBytes: number };
+  knowledgeGraph: {
+    entities: number;
+    relationships: number;
+  };
+  consolidationHistory: {
+    total: number;
+    lastConsolidation?: Date;
+  };
 }
 
 export default {

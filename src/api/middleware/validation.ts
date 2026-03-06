@@ -135,10 +135,11 @@ export async function validationMiddleware(
 
     // Return validation errors
     if (errors.length > 0) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'Validation Failed',
         details: errors,
       });
+      return;
     }
 
     next();

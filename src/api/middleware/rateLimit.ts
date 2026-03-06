@@ -71,11 +71,12 @@ export function rateLimitMiddleware(
       res.setHeader('X-RateLimit-Remaining', '0');
       res.setHeader('X-RateLimit-Reset', record.resetTime.toString());
 
-      return res.status(429).json({
+      res.status(429).json({
         error: 'Too Many Requests',
         message: `Rate limit exceeded. Reset in ${resetIn} seconds`,
         retryAfter: resetIn,
       });
+      return;
     }
 
     // Increment counter
@@ -126,11 +127,12 @@ export function createRouteRateLimit(options: Partial<RateLimitConfig>) {
         const resetIn = Math.ceil((record.resetTime - now) / 1000);
         res.setHeader('Retry-After', resetIn.toString());
 
-        return res.status(429).json({
+        res.status(429).json({
           error: 'Too Many Requests',
           message: `This endpoint is rate limited to ${config.maxRequests} requests per minute`,
           retryAfter: resetIn,
         });
+        return;
       }
 
       record.count++;

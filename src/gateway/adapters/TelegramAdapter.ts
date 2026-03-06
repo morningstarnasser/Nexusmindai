@@ -17,7 +17,7 @@ export class TelegramAdapter extends ProtocolAdapter {
   private lastMessageTime = 0;
 
   constructor(config: AdapterConfig) {
-    super(config);
+    super('telegram', config as Record<string, unknown>);
     this.telegramToken = config.credentials?.token || '';
     if (!this.telegramToken) {
       throw new Error('Telegram adapter requires token in credentials');

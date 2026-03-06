@@ -86,7 +86,7 @@ export class ModelRouter {
       logger.error('Completion request failed', { error });
       
       // Attempt failover
-      return this.failoverCompletion(request, [request.provider || this.failoverChain[0]]);
+      return this.failoverCompletion(request, [request.provider || this.failoverChain[0] || '']);
     }
   }
 
@@ -243,7 +243,7 @@ export class ModelRouter {
       timestamp: new Date()
     };
 
-    response.usage.totalTokens = response.usage.promptTokens + response.usage.completionTokens;
+    response.usage!.totalTokens = response.usage!.promptTokens + (response.usage!.completionTokens || 0);
 
     logger.debug('Provider invoked', {
       provider: providerName,

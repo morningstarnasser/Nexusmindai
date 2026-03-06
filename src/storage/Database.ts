@@ -17,9 +17,9 @@ export class Database {
   async initialize(dbPath: string): Promise<void> {
     try {
       const sqlite3Module = await import('sqlite3');
-      const sqlite3 = sqlite3.default || sqlite3;
+      const sqlite3Lib = (sqlite3Module as any).default || sqlite3Module;
 
-      this.db = new sqlite3.Database(dbPath, (error: Error | null) => {
+      this.db = new sqlite3Lib.Database(dbPath, (error: Error | null) => {
         if (error) {
           console.error('Database connection error:', error);
         } else {

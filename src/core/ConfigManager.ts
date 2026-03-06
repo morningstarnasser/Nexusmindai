@@ -62,7 +62,7 @@ export class ConfigManager {
   async loadAgentConfig(filePath: string): Promise<AgentConfig | null> {
     try {
       const content = await fs.readFile(filePath, 'utf-8');
-      const config = this.parseYaml(content) as AgentConfig;
+      const config = this.parseYaml(content) as unknown as AgentConfig;
       
       if (!config.id) {
         logger.warn('Agent config missing id', { filePath });
@@ -153,7 +153,7 @@ export class ConfigManager {
         for (const placeholder of match) {
           const envVar = placeholder.slice(2, -1);
           const value = process.env[envVar] || '';
-          return value as unknown;
+          return value as unknown as void;
         }
       }
     } else if (typeof config === 'object' && config !== null) {

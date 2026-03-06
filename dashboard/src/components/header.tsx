@@ -1,7 +1,6 @@
 'use client';
 
 import { Bell, Search, User, LogOut } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 
 export function Header() {

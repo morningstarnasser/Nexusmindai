@@ -96,7 +96,7 @@ export class Encryption {
       encrypted += cipher.final('hex');
 
       // Get authentication tag
-      const tag = cipher.getAuthTag();
+      const tag = (cipher as any).getAuthTag();
 
       return {
         encrypted,
@@ -128,7 +128,7 @@ export class Encryption {
       const decipher = createDecipheriv(this.config.algorithm, this.masterKey, iv);
 
       if (tag.length > 0) {
-        decipher.setAuthTag(tag);
+        (decipher as any).setAuthTag(tag);
       }
 
       // Decrypt data

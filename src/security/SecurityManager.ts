@@ -104,9 +104,9 @@ export class SecurityManager extends EventEmitter {
           eventType: 'security_check_failed',
           subject: request.subject,
           action: request.action,
-          reason: 'Subject is blocked',
           timestamp: new Date(),
-        });
+          metadata: { reason: 'Subject is blocked' },
+        } as any);
 
         return {
           allowed: false,
@@ -123,7 +123,7 @@ export class SecurityManager extends EventEmitter {
           subject: request.subject,
           action: request.action,
           timestamp: new Date(),
-        });
+        } as any);
 
         return {
           allowed: false,
@@ -147,7 +147,7 @@ export class SecurityManager extends EventEmitter {
           action: request.action,
           resource: request.resource,
           timestamp: new Date(),
-        });
+        } as any);
 
         return {
           allowed: false,
@@ -168,11 +168,9 @@ export class SecurityManager extends EventEmitter {
         subject: request.subject,
         action: request.action,
         resource: request.resource,
-        riskScore,
-        requiresMFA,
-        duration: Date.now() - startTime,
         timestamp: new Date(),
-      });
+        metadata: { riskScore, requiresMFA, duration: Date.now() - startTime },
+      } as any);
 
       return {
         allowed: true,
@@ -211,11 +209,9 @@ export class SecurityManager extends EventEmitter {
       await this.auditLogger.log({
         eventType: 'token_issued',
         subject,
-        tokenId: token.id,
-        permissions,
-        expiresAt: token.expiresAt,
         timestamp: new Date(),
-      });
+        metadata: { tokenId: token.id, permissions, expiresAt: token.expiresAt },
+      } as any);
 
       this.logger.info(`Issued token for ${subject}`);
       this.emit('tokenIssued', { tokenId: token.id, subject });
@@ -260,10 +256,10 @@ export class SecurityManager extends EventEmitter {
 
       await this.auditLogger.log({
         eventType: 'token_revoked',
-        tokenId,
         subject: token.subject,
         timestamp: new Date(),
-      });
+        metadata: { tokenId },
+      } as any);
 
       this.logger.info(`Revoked token ${tokenId}`);
       this.emit('tokenRevoked', { tokenId, subject: token.subject });
@@ -285,9 +281,9 @@ export class SecurityManager extends EventEmitter {
       await this.auditLogger.log({
         eventType: 'subject_blocked',
         subject,
-        reason,
         timestamp: new Date(),
-      });
+        metadata: { reason },
+      } as any);
 
       this.logger.warn(`Blocked subject: ${subject}`);
       this.emit('subjectBlocked', { subject, reason });
@@ -308,7 +304,7 @@ export class SecurityManager extends EventEmitter {
         eventType: 'subject_unblocked',
         subject,
         timestamp: new Date(),
-      });
+      } as any);
 
       this.logger.info(`Unblocked subject: ${subject}`);
       this.emit('subjectUnblocked', { subject });

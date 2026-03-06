@@ -45,7 +45,7 @@ export class AgentManager extends EventEmitter {
       logger.info('Initializing AgentManager');
       
       // Load agent configs from configured directory
-      const agentConfigDir = this.configManager.get('agent.configDir') || './config/agents';
+      const agentConfigDir = (this.configManager.get('agent.configDir') || './config/agents') as string;
       await this.loadAgentConfigs(agentConfigDir);
       
       logger.info(`Loaded ${this.agentConfigs.size} agent configurations`);
@@ -102,6 +102,7 @@ export class AgentManager extends EventEmitter {
       this.agentStatusMap.set(agentId, 'initialized');
 
       const event: AgentEvent = {
+        name: 'agent:created',
         type: 'agent:created',
         agentId,
         timestamp: new Date(),
@@ -116,6 +117,7 @@ export class AgentManager extends EventEmitter {
     } catch (error) {
       logger.error(`Failed to create agent ${agentId}`, { error });
       const event: AgentEvent = {
+        name: 'agent:error',
         type: 'agent:error',
         agentId,
         timestamp: new Date(),
@@ -141,6 +143,7 @@ export class AgentManager extends EventEmitter {
       this.agentStatusMap.delete(agentId);
 
       const event: AgentEvent = {
+        name: 'agent:deleted',
         type: 'agent:deleted',
         agentId,
         timestamp: new Date(),
@@ -199,6 +202,7 @@ export class AgentManager extends EventEmitter {
       await agent.updateConfig(updatedConfig);
 
       const event: AgentEvent = {
+        name: 'agent:updated',
         type: 'agent:updated',
         agentId,
         timestamp: new Date(),

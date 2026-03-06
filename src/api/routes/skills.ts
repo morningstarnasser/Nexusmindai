@@ -47,7 +47,8 @@ skillsRouter.post('/install', (req: Request, res: Response) => {
     const { name, description, category, source, parameters } = (req as any).body;
 
     if (!name) {
-      return res.status(400).json({ error: 'Skill name is required' });
+      res.status(400).json({ error: 'Skill name is required' });
+      return;
     }
 
     const skillId = `skill-${Date.now()}`;
@@ -79,17 +80,19 @@ skillsRouter.post('/install', (req: Request, res: Response) => {
 // DELETE /:id - Uninstall skill
 skillsRouter.delete('/:id', (req: Request, res: Response) => {
   try {
-    const skill = skills.get(req.params.id);
+    const skillId = req.params.id as string;
+    const skill = skills.get(skillId);
 
     if (!skill) {
-      return res.status(404).json({ error: 'Skill not found' });
+      res.status(404).json({ error: 'Skill not found' });
+      return;
     }
 
-    skills.delete(req.params.id);
+    skills.delete(skillId);
 
     res.json({
       message: 'Skill uninstalled successfully',
-      skill_id: req.params.id,
+      skill_id: skillId,
     });
   } catch (error) {
     res.status(500).json({ error: (error as Error).message });
@@ -99,16 +102,19 @@ skillsRouter.delete('/:id', (req: Request, res: Response) => {
 // POST /:id/execute - Execute a skill
 skillsRouter.post('/:id/execute', (req: Request, res: Response) => {
   try {
-    const skill = skills.get(req.params.id);
+    const skillId = req.params.id as string;
+    const skill = skills.get(skillId);
 
     if (!skill) {
-      return res.status(404).json({ error: 'Skill not found' });
+      res.status(404).json({ error: 'Skill not found' });
+      return;
     }
 
     const { input, context } = (req as any).body;
 
     if (!skill.enabled) {
-      return res.status(400).json({ error: 'Skill is disabled' });
+      res.status(400).json({ error: 'Skill is disabled' });
+      return;
     }
 
     const executionId = `exec-${Date.now()}`;
@@ -118,7 +124,7 @@ skillsRouter.post('/:id/execute', (req: Request, res: Response) => {
 
     const result = {
       id: executionId,
-      skill_id: req.params.id,
+      skill_id: skillId,
       input,
       output: {
         status: 'success',

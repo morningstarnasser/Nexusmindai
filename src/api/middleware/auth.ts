@@ -51,20 +51,22 @@ export async function authMiddleware(
     }
 
     if (!token) {
-      return res.status(401).json({
+      res.status(401).json({
         error: 'Unauthorized',
         message: 'Missing authentication token',
         required: 'Authorization header or X-API-Key',
       });
+      return;
     }
 
     // Validate token
     const isValid = validateToken(token);
     if (!isValid) {
-      return res.status(401).json({
+      res.status(401).json({
         error: 'Unauthorized',
         message: 'Invalid or expired authentication token',
       });
+      return;
     }
 
     // Attach user info to request
