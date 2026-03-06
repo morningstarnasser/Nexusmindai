@@ -250,10 +250,33 @@ async function addAgent(id: string): Promise<void> {
       default: id,
     },
     {
-      type: 'input',
+      type: 'list',
       name: 'emoji',
       message: 'Agent emoji:',
+      choices: [
+        { name: '🤖 Robot', value: '🤖' },
+        { name: '🧠 Brain', value: '🧠' },
+        { name: '🐙 Octopus (NEXO)', value: '🐙' },
+        { name: '⚡ Lightning', value: '⚡' },
+        { name: '🔥 Fire', value: '🔥' },
+        { name: '🎯 Target', value: '🎯' },
+        { name: '🛡️ Shield', value: '🛡️' },
+        { name: '🚀 Rocket', value: '🚀' },
+        { name: '💎 Diamond', value: '💎' },
+        { name: '🦾 Mechanical Arm', value: '🦾' },
+        { name: '👾 Alien', value: '👾' },
+        { name: '🐺 Wolf', value: '🐺' },
+        { name: '🦅 Eagle', value: '🦅' },
+        { name: '🐉 Dragon', value: '🐉' },
+        { name: '✏️ Custom...', value: 'custom' },
+      ],
       default: '🤖',
+    },
+    {
+      type: 'input',
+      name: 'customEmoji',
+      message: 'Enter your emoji:',
+      when: (answers) => answers.emoji === 'custom',
     },
     {
       type: 'list',
@@ -280,7 +303,7 @@ async function addAgent(id: string): Promise<void> {
   const newAgent: Agent = {
     id,
     name: answers.name,
-    emoji: answers.emoji,
+    emoji: answers.customEmoji || answers.emoji,
     model: answers.customModel || answers.model,
     bindings: [],
     createdAt: new Date().toISOString(),
@@ -368,16 +391,39 @@ async function setAgentIdentity(agentId: string, name?: string, emoji?: string):
         when: !finalName,
       },
       {
-        type: 'input',
+        type: 'list',
         name: 'emoji',
         message: 'Agent emoji:',
+        choices: [
+          { name: '🤖 Robot', value: '🤖' },
+          { name: '🧠 Brain', value: '🧠' },
+          { name: '🐙 Octopus (NEXO)', value: '🐙' },
+          { name: '⚡ Lightning', value: '⚡' },
+          { name: '🔥 Fire', value: '🔥' },
+          { name: '🎯 Target', value: '🎯' },
+          { name: '🛡️ Shield', value: '🛡️' },
+          { name: '🚀 Rocket', value: '🚀' },
+          { name: '💎 Diamond', value: '💎' },
+          { name: '🦾 Mechanical Arm', value: '🦾' },
+          { name: '👾 Alien', value: '👾' },
+          { name: '🐺 Wolf', value: '🐺' },
+          { name: '🦅 Eagle', value: '🦅' },
+          { name: '🐉 Dragon', value: '🐉' },
+          { name: '✏️ Custom...', value: 'custom' },
+        ],
         default: agents[agentId].emoji || '🤖',
         when: !finalEmoji,
+      },
+      {
+        type: 'input',
+        name: 'customEmoji',
+        message: 'Enter your emoji:',
+        when: (answers) => !finalEmoji && answers.emoji === 'custom',
       },
     ]);
 
     finalName = finalName || answers.name;
-    finalEmoji = finalEmoji || answers.emoji;
+    finalEmoji = finalEmoji || answers.customEmoji || answers.emoji;
   }
 
   agents[agentId].name = finalName!;
