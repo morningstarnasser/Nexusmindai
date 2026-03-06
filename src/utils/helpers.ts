@@ -64,7 +64,7 @@ export async function withTimeout<T>(
   timeoutMs: number,
   timeoutMessage: string = 'Operation timed out',
 ): Promise<T> {
-  let timeoutHandle: NodeJS.Timeout;
+  let timeoutHandle: NodeJS.Timeout | undefined = undefined;
 
   const timeoutPromise = new Promise<T>((_, reject) => {
     timeoutHandle = setTimeout(() => {
@@ -140,7 +140,7 @@ export function throttle<T extends (...args: any[]) => any>(
   let lastArgs: Parameters<T> | null = null;
   let timeoutHandle: NodeJS.Timeout | null = null;
 
-  const clearTimeout = () => {
+  const clearPendingTimeout = () => {
     if (timeoutHandle) {
       clearTimeout(timeoutHandle);
       timeoutHandle = null;
@@ -157,10 +157,10 @@ export function throttle<T extends (...args: any[]) => any>(
     } else if (timeSinceLastRun >= intervalMs) {
       fn(...args);
       lastRunTime = now;
-      clearTimeout();
+      clearPendingTimeout();
     } else if (trailing) {
       lastArgs = args;
-      clearTimeout();
+      clearPendingTimeout();
 
       timeoutHandle = setTimeout(() => {
         if (lastArgs) {
@@ -184,12 +184,12 @@ export function deepMerge<T extends Record<string, any>>(target: T, ...sources: 
   if (isObject(target) && isObject(source)) {
     for (const key in source) {
       if (isObject(source[key])) {
-        if (!target[key]) {
-          target[key] = {};
+        if (!(target as any)[key]) {
+          (target as any)[key] = {};
         }
-        deepMerge(target[key], source[key]);
+        deepMerge((target as any)[key], source[key]);
       } else {
-        target[key] = source[key];
+        (target as any)[key] = source[key];
       }
     }
   }

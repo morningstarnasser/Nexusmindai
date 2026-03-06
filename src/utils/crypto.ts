@@ -283,7 +283,7 @@ export function encryptSensitiveFields<T extends Record<string, any>>(
 
   for (const field of sensitiveFields) {
     if (field in result && typeof result[field] === 'string') {
-      result[field] = JSON.stringify({
+      (result as any)[field] = JSON.stringify({
         _encrypted: true,
         data: encrypt(result[field], password),
       });
@@ -307,7 +307,7 @@ export function decryptSensitiveFields<T extends Record<string, any>>(
       try {
         const parsed = JSON.parse(result[key]);
         if (parsed._encrypted && parsed.data) {
-          result[key] = decrypt(parsed.data, password);
+          (result as any)[key] = decrypt(parsed.data, password);
         }
       } catch {
         // Not encrypted, leave as is
