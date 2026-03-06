@@ -2,7 +2,7 @@
   <img src="dashboard/nexo-logo.png" alt="NEXO — Nexusmindai Mascot" width="200" height="200" style="border-radius: 20px;">
 </p>
 
-<h1 align="center">🐙 Nexusmindai</h1>
+<h1 align="center">🐙 NexusMindAI</h1>
 
 <p align="center">
   <strong>The Ultimate Autonomous AI Agent Platform — 1000x Beyond OpenClaw</strong>
