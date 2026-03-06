@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="dashboard/nexo-mascot.svg" alt="NEXO — NexusMind Mascot" width="200" height="200">
+  <img src="dashboard/nexo-mascot.svg" alt="NEXO — Nexusmindai Mascot" width="200" height="200">
 </p>
 
-<h1 align="center">🐙 NexusMind</h1>
+<h1 align="center">🐙 Nexusmindai</h1>
 
 <p align="center">
   <strong>The Ultimate Autonomous AI Agent Platform — 1000x Beyond OpenClaw</strong>
@@ -13,10 +13,10 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/morningstarnasser/NexusMind"><img src="https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen?style=flat-square&logo=node.js" alt="Node.js"></a>
+  <a href="https://github.com/morningstarnasser/Nexusmindai"><img src="https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen?style=flat-square&logo=node.js" alt="Node.js"></a>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript"></a>
-  <a href="https://github.com/morningstarnasser/NexusMind/blob/main/LICENSE"><img src="https://img.shields.io/github/license/morningstarnasser/NexusMind?style=flat-square&color=blue" alt="MIT License"></a>
-  <a href="https://github.com/morningstarnasser/NexusMind/stargazers"><img src="https://img.shields.io/github/stars/morningstarnasser/NexusMind?style=flat-square&color=yellow" alt="Stars"></a>
+  <a href="https://github.com/morningstarnasser/Nexusmindai/blob/main/LICENSE"><img src="https://img.shields.io/github/license/morningstarnasser/Nexusmindai?style=flat-square&color=blue" alt="MIT License"></a>
+  <a href="https://github.com/morningstarnasser/Nexusmindai/stargazers"><img src="https://img.shields.io/github/stars/morningstarnasser/Nexusmindai?style=flat-square&color=yellow" alt="Stars"></a>
 </p>
 
 <p align="center">
@@ -32,9 +32,9 @@
 
 ## 🐙 Meet NEXO
 
-**NEXO** is NexusMind's mascot — a cosmic Neuro-Octopus born from the fusion of an octopus mind with a neural network. Like a real octopus with 9 brains and 3 hearts, NEXO represents NexusMind's multi-agent architecture, redundant systems, and unmatched intelligence.
+**NEXO** is Nexusmindai's mascot — a cosmic Neuro-Octopus born from the fusion of an octopus mind with a neural network. Like a real octopus with 9 brains and 3 hearts, NEXO represents Nexusmindai's multi-agent architecture, redundant systems, and unmatched intelligence.
 
-> *OpenClaw has the Lobster 🦞 — NexusMind has NEXO 🐙*
+> *OpenClaw has the Lobster 🦞 — Nexusmindai has NEXO 🐙*
 
 Each of NEXO's 8 tentacles represents a core capability: Communication, Thinking, Memory, Action, Heartbeat, Security, Observation, and Creation.
 
@@ -67,9 +67,9 @@ Deploy agents across **12+ communication platforms** simultaneously:
 - **🎯 Smart Model Router** — Automatic routing to best AI model per task
 - **📱 CLI Tool** — Full command-line management (like OpenClaw)
 
-### What Makes NexusMind Different from OpenClaw
+### What Makes Nexusmindai Different from OpenClaw
 
-| Feature | OpenClaw 🦞 | NexusMind 🐙 |
+| Feature | OpenClaw 🦞 | Nexusmindai 🐙 |
 |---------|-------------|--------------|
 | Messaging | 6 platforms | 12+ platforms |
 | Heartbeat | 30min cron | 5 frequency types + smart scheduling |
@@ -86,8 +86,8 @@ Deploy agents across **12+ communication platforms** simultaneously:
 
 ```bash
 # Clone
-git clone https://github.com/morningstarnasser/NexusMind.git
-cd NexusMind
+git clone https://github.com/morningstarnasser/Nexusmindai.git
+cd Nexusmindai
 
 # Install
 npm install
@@ -120,7 +120,7 @@ curl -X POST http://localhost:4848/api/v1/agents \
 
 ## 🖥️ CLI Commands
 
-NexusMind has a full CLI inspired by OpenClaw:
+Nexusmindai has a full CLI inspired by OpenClaw:
 
 ```bash
 # Gateway
@@ -191,7 +191,7 @@ Message types: `message`, `status`, `ping/pong`, `heartbeat`, `activity`
 
 ## 📊 Dashboard
 
-NexusMind includes a full web dashboard (`dashboard/index.html`) — a single-file HTML app with Tailwind CSS, no build step required.
+Nexusmindai includes a full web dashboard (`dashboard/index.html`) — a single-file HTML app with Tailwind CSS, no build step required.
 
 | Feature | Description |
 |---------|-------------|
@@ -213,7 +213,7 @@ docker-compose up -d
 ```
 
 ### Synology NAS
-NexusMind runs perfectly on Synology NAS (DS220+, DS720+, DS920+):
+Nexusmindai runs perfectly on Synology NAS (DS220+, DS720+, DS920+):
 ```bash
 cd deploy/synology
 docker-compose -f docker-compose.synology.yml up -d
@@ -225,7 +225,7 @@ See [`deploy/synology/INSTALL_GUIDE.md`](deploy/synology/INSTALL_GUIDE.md) for t
 ## 🏗️ Architecture
 
 ```
-NexusMind/
+Nexusmindai/
 ├── src/
 │   ├── index.ts              # Entry point — starts Gateway
 │   ├── gateway.ts            # HTTP + WebSocket server
@@ -289,5 +289,5 @@ All contributions welcome — from bug fixes to new platform adapters to skill p
 <p align="center">
   <img src="dashboard/nexo-mascot.svg" alt="NEXO" width="60" height="60">
   <br />
-  <sub>🐙 <strong>NexusMind</strong> — Your Mind, Amplified. Built by <a href="https://github.com/morningstarnasser">Morningstar</a></sub>
+  <sub>🐙 <strong>Nexusmindai</strong> — Your Mind, Amplified. Built by <a href="https://github.com/morningstarnasser">Morningstar</a></sub>
 </p>
