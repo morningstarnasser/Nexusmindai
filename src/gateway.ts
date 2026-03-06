@@ -2,6 +2,9 @@ import express from 'express';
 import cors from 'cors';
 import { WebSocketServer, WebSocket } from 'ws';
 import http from 'http';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { exec } from 'child_process';
 import { config } from './config.js';
 import { agentManager } from './agents.js';
 import { HeartbeatEngine } from './heartbeat.js';
@@ -30,6 +33,10 @@ export class Gateway {
     this.heartbeat = new HeartbeatEngine(async (agentId) => {
       await this.handleHeartbeat(agentId);
     });
+
+    // Serve dashboard static files
+    const __dirname = path.dirname(fileURLToPath(import.meta.url));
+    this.app.use(express.static(path.join(__dirname, '..', 'dashboard')));
 
     this.setupRoutes();
     this.setupWebSocket();
@@ -227,11 +234,8 @@ export class Gateway {
       if (req.path.startsWith('/api/')) {
         res.status(404).json({ ok: false, error: 'Not found' });
       } else {
-        res.json({ 
-          ok: true, 
-          message: 'NexusMind Gateway v0.1.0',
-          wsEndpoint: 'ws://localhost:4848'
-        });
+        const __dirname = path.dirname(fileURLToPath(import.meta.url));
+        res.sendFile(path.join(__dirname, '..', 'dashboard', 'index.html'));
       }
     });
   }
@@ -277,10 +281,17 @@ export class Gateway {
 
     return new Promise((resolve) => {
       this.server.listen(port, host, () => {
-        log.info(`🧠 NexusMind Gateway running on http://${host}:${port}`);
+        const url = `http://localhost:${port}`;
+        log.info(`NexusMind Gateway running on ${url}`);
         log.info(`   WebSocket: ws://${host}:${port}`);
-        log.info(`   API: http://localhost:${port}/api/v1/`);
+        log.info(`   API: ${url}/api/v1/`);
+        log.info(`   Dashboard: ${url}`);
         this.heartbeat.start();
+
+        // Auto-open dashboard in browser
+        const cmd = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
+        exec(`${cmd} ${url}`);
+
         resolve();
       });
     });
