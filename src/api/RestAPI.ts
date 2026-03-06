@@ -344,7 +344,7 @@ export class RestAPI {
         <span class="nav-badge">BETA</span>
       </div>
       <div class="nav-links">
-        <a href="https://github.com/morningstarnasser/Nexusmindai" class="nav-link" target="_blank"><i data-lucide="book-open"></i> <span>Docs</span></a>
+        <a href="/docs" class="nav-link"><i data-lucide="book-open"></i> <span>Docs</span></a>
         <a href="https://github.com/morningstarnasser/Nexusmindai" class="nav-link" target="_blank"><i data-lucide="github"></i> <span>GitHub</span></a>
         <a href="https://github.com/morningstarnasser/Nexusmindai" class="nav-cta" target="_blank"><i data-lucide="star"></i> Star on GitHub</a>
       </div>
@@ -709,6 +709,557 @@ export class RestAPI {
       el.style.transform = 'translateY(20px)';
       el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
       observer.observe(el);
+    });
+  </script>
+</body>
+</html>`);
+    });
+
+    // Documentation page
+    this.app.get('/docs', (req: Request, res: Response) => {
+      res.setHeader('Content-Type', 'text/html');
+      res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexusMind &mdash; Documentation</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236366f1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 2a8 8 0 0 0-8 8c0 3.4 2.1 6.3 5 7.5V20h6v-2.5c2.9-1.2 5-4.1 5-7.5a8 8 0 0 0-8-8z'/><path d='M12 2v4'/><path d='m4.93 4.93 2.83 2.83'/><path d='m16.24 7.76 2.83-2.83'/></svg>">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{--bg:#0a0a0f;--surface:rgba(30,30,46,.5);--surface-hover:rgba(30,30,46,.8);--border:rgba(99,102,241,.1);--border-hover:rgba(99,102,241,.3);--accent:#6366f1;--accent-light:#818cf8;--accent-lighter:#a78bfa;--accent-lightest:#c7d2fe;--text:#e2e8f0;--text-muted:#94a3b8;--text-dim:#64748b;--text-dimmer:#475569;--green:#22c55e;--radius:16px;--radius-sm:10px;--radius-xs:8px;--sidebar-w:280px}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;line-height:1.7}
+    a{color:var(--accent-light);text-decoration:none;transition:color .2s}
+    a:hover{color:var(--accent-lighter)}
+    code{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:.88em;background:rgba(99,102,241,.08);color:var(--accent-lightest);padding:2px 7px;border-radius:4px}
+    pre{background:rgba(10,10,20,.8);border:1px solid var(--border);border-radius:var(--radius-xs);padding:20px 24px;overflow-x:auto;margin:16px 0;font-family:'SF Mono',Monaco,Consolas,monospace;font-size:.85rem;line-height:1.7;color:var(--accent-lightest)}
+    pre .comment{color:var(--text-dimmer)}
+    pre .keyword{color:#c084fc}
+    pre .string{color:#22c55e}
+    pre .method{color:#818cf8}
+    pre .number{color:#f59e0b}
+
+    /* Background */
+    .bg{position:fixed;inset:0;z-index:0}
+    .bg::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 20% 30%,rgba(99,102,241,.08) 0%,transparent 50%)}
+    .grid-bg{position:fixed;inset:0;background-image:linear-gradient(rgba(99,102,241,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,.02) 1px,transparent 1px);background-size:64px 64px;z-index:0}
+
+    /* Nav */
+    .nav{position:fixed;top:0;left:0;right:0;z-index:100;backdrop-filter:blur(20px);background:rgba(10,10,15,.85);border-bottom:1px solid var(--border)}
+    .nav-inner{max-width:1400px;margin:0 auto;padding:14px 32px;display:flex;align-items:center;justify-content:space-between}
+    .nav-brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.1rem;color:var(--text)}
+    .nav-brand i{width:24px;height:24px;color:var(--accent-light)}
+    .nav-badge{font-size:.65rem;padding:2px 8px;border-radius:999px;background:rgba(99,102,241,.15);color:var(--accent-light);font-weight:600;letter-spacing:.5px}
+    .nav-links{display:flex;align-items:center;gap:8px}
+    .nav-link{padding:8px 16px;border-radius:var(--radius-xs);font-size:.85rem;color:var(--text-muted);transition:all .2s;display:flex;align-items:center;gap:6px}
+    .nav-link:hover,.nav-link.active{color:var(--text);background:rgba(99,102,241,.08)}
+    .nav-link i{width:15px;height:15px}
+
+    /* Layout */
+    .layout{position:relative;z-index:1;display:flex;padding-top:57px;min-height:100vh}
+
+    /* Sidebar */
+    .sidebar{position:fixed;top:57px;left:0;bottom:0;width:var(--sidebar-w);background:rgba(15,15,25,.6);border-right:1px solid var(--border);overflow-y:auto;padding:24px 0;backdrop-filter:blur(10px);z-index:50}
+    .sidebar-section{margin-bottom:24px}
+    .sidebar-title{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);padding:8px 24px;display:flex;align-items:center;gap:6px}
+    .sidebar-title i{width:12px;height:12px}
+    .sidebar-link{display:flex;align-items:center;gap:8px;padding:8px 24px;font-size:.85rem;color:var(--text-muted);transition:all .15s;border-left:2px solid transparent;cursor:pointer}
+    .sidebar-link:hover{color:var(--text);background:rgba(99,102,241,.05)}
+    .sidebar-link.active{color:var(--accent-lightest);background:rgba(99,102,241,.08);border-left-color:var(--accent)}
+    .sidebar-link i{width:14px;height:14px;opacity:.7}
+
+    /* Content */
+    .content{margin-left:var(--sidebar-w);flex:1;max-width:860px;padding:48px 56px 80px}
+
+    /* Article styles */
+    .doc-header{margin-bottom:40px;padding-bottom:24px;border-bottom:1px solid var(--border)}
+    .doc-header h1{font-size:2.2rem;font-weight:800;letter-spacing:-.02em;margin-bottom:8px}
+    .doc-header p{color:var(--text-muted);font-size:1.05rem}
+    .doc-section{margin-bottom:48px;scroll-margin-top:80px}
+    .doc-section h2{font-size:1.5rem;font-weight:700;margin-bottom:16px;letter-spacing:-.01em;display:flex;align-items:center;gap:10px}
+    .doc-section h2 i{width:22px;height:22px;color:var(--accent-lighter)}
+    .doc-section h3{font-size:1.1rem;font-weight:600;margin:24px 0 10px;color:var(--accent-lightest)}
+    .doc-section p{color:var(--text-muted);margin-bottom:12px}
+    .doc-section ul,.doc-section ol{color:var(--text-muted);padding-left:24px;margin-bottom:12px}
+    .doc-section li{margin-bottom:6px}
+
+    /* Tables */
+    .doc-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.85rem}
+    .doc-table th{text-align:left;padding:10px 16px;background:rgba(99,102,241,.06);border:1px solid var(--border);color:var(--accent-lightest);font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.05em}
+    .doc-table td{padding:10px 16px;border:1px solid var(--border);color:var(--text-muted)}
+    .doc-table tr:hover td{background:rgba(99,102,241,.03)}
+
+    /* Callout */
+    .callout{display:flex;gap:12px;padding:16px 20px;border-radius:var(--radius-xs);margin:16px 0;font-size:.88rem}
+    .callout i{width:18px;height:18px;flex-shrink:0;margin-top:2px}
+    .callout-info{background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);color:#93c5fd}
+    .callout-info i{color:#3b82f6}
+    .callout-warn{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);color:#fcd34d}
+    .callout-warn i{color:#f59e0b}
+    .callout-success{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);color:#86efac}
+    .callout-success i{color:#22c55e}
+
+    /* Method badge */
+    .method{font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:4px;display:inline-block;margin-right:6px;font-family:'SF Mono',Monaco,Consolas,monospace}
+    .method-get{color:#22c55e;background:rgba(34,197,94,.12)}
+    .method-post{color:#3b82f6;background:rgba(59,130,246,.12)}
+    .method-put{color:#f59e0b;background:rgba(245,158,11,.12)}
+    .method-delete{color:#ef4444;background:rgba(239,68,68,.12)}
+
+    /* Endpoint row */
+    .endpoint{display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xs);margin:8px 0;font-family:'SF Mono',Monaco,Consolas,monospace;font-size:.82rem;color:var(--text-muted);transition:border-color .2s}
+    .endpoint:hover{border-color:var(--border-hover)}
+    .endpoint-desc{margin-left:auto;font-family:-apple-system,sans-serif;font-size:.75rem;color:var(--text-dim)}
+
+    /* Footer */
+    .doc-footer{margin-top:64px;padding-top:24px;border-top:1px solid var(--border);text-align:center;font-size:.78rem;color:var(--text-dimmer)}
+    .doc-footer a{color:var(--accent-light)}
+
+    /* Mobile */
+    @media(max-width:900px){
+      .sidebar{display:none}
+      .content{margin-left:0;padding:32px 20px 60px}
+    }
+  </style>
+</head>
+<body>
+  <div class="bg"></div>
+  <div class="grid-bg"></div>
+
+  <!-- Nav -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="/" class="nav-brand"><i data-lucide="brain-circuit"></i> NexusMind <span class="nav-badge">DOCS</span></a>
+      <div class="nav-links">
+        <a href="/" class="nav-link"><i data-lucide="home"></i> Home</a>
+        <a href="/docs" class="nav-link active"><i data-lucide="book-open"></i> Docs</a>
+        <a href="https://github.com/morningstarnasser/Nexusmindai" class="nav-link" target="_blank"><i data-lucide="github"></i> GitHub</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-title"><i data-lucide="rocket"></i> Getting Started</div>
+        <a href="#introduction" class="sidebar-link active"><i data-lucide="info"></i> Introduction</a>
+        <a href="#quick-start" class="sidebar-link"><i data-lucide="zap"></i> Quick Start</a>
+        <a href="#installation" class="sidebar-link"><i data-lucide="download"></i> Installation</a>
+        <a href="#configuration" class="sidebar-link"><i data-lucide="settings"></i> Configuration</a>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-title"><i data-lucide="layers"></i> Core Concepts</div>
+        <a href="#architecture" class="sidebar-link"><i data-lucide="cpu"></i> Architecture</a>
+        <a href="#agents" class="sidebar-link"><i data-lucide="bot"></i> Agents</a>
+        <a href="#gateway" class="sidebar-link"><i data-lucide="radio-tower"></i> Gateway</a>
+        <a href="#memory" class="sidebar-link"><i data-lucide="brain"></i> Memory System</a>
+        <a href="#heartbeat" class="sidebar-link"><i data-lucide="heart-pulse"></i> Heartbeat Engine</a>
+        <a href="#skills" class="sidebar-link"><i data-lucide="puzzle"></i> Skill System</a>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-title"><i data-lucide="code"></i> API Reference</div>
+        <a href="#api-agents" class="sidebar-link"><i data-lucide="bot"></i> /api/agents</a>
+        <a href="#api-workflows" class="sidebar-link"><i data-lucide="git-branch"></i> /api/workflows</a>
+        <a href="#api-skills" class="sidebar-link"><i data-lucide="puzzle"></i> /api/skills</a>
+        <a href="#api-memory" class="sidebar-link"><i data-lucide="database"></i> /api/memory</a>
+        <a href="#api-heartbeat" class="sidebar-link"><i data-lucide="heart-pulse"></i> /api/heartbeat</a>
+        <a href="#api-system" class="sidebar-link"><i data-lucide="activity"></i> /api/system</a>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-title"><i data-lucide="globe"></i> Platforms</div>
+        <a href="#platforms" class="sidebar-link"><i data-lucide="radio-tower"></i> All Adapters</a>
+        <a href="#platform-telegram" class="sidebar-link"><i data-lucide="send"></i> Telegram</a>
+        <a href="#platform-discord" class="sidebar-link"><i data-lucide="message-circle"></i> Discord</a>
+        <a href="#platform-slack" class="sidebar-link"><i data-lucide="hash"></i> Slack</a>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-title"><i data-lucide="ship"></i> Deployment</div>
+        <a href="#deploy-railway" class="sidebar-link"><i data-lucide="cloud"></i> Railway</a>
+        <a href="#deploy-docker" class="sidebar-link"><i data-lucide="container"></i> Docker</a>
+        <a href="#env-vars" class="sidebar-link"><i data-lucide="key"></i> Environment Vars</a>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="content">
+      <div class="doc-header">
+        <h1>NexusMind Documentation</h1>
+        <p>Complete guide to the Autonomous AI Agent Orchestration Platform</p>
+      </div>
+
+      <!-- Introduction -->
+      <section class="doc-section" id="introduction">
+        <h2><i data-lucide="info"></i> Introduction</h2>
+        <p>NexusMind is an open-source, autonomous AI agent orchestration platform built with TypeScript. It enables you to create, deploy, and manage intelligent AI agents across 12+ messaging platforms from a single unified codebase.</p>
+        <div class="callout callout-info"><i data-lucide="lightbulb"></i> NexusMind is designed for developers who need to deploy AI agents at scale without managing separate integrations for each platform.</div>
+        <h3>Key Features</h3>
+        <ul>
+          <li><strong>Multi-Platform Gateway</strong> &mdash; Deploy to Telegram, Discord, Slack, WhatsApp, Teams, Matrix, IRC, Email, SMS, Signal, and Webhook simultaneously</li>
+          <li><strong>Tiered Memory</strong> &mdash; Short-term, long-term (vector), and episodic memory with semantic search</li>
+          <li><strong>Heartbeat Engine</strong> &mdash; Autonomous task scheduling with 5 heartbeat types (Pulse, Rhythm, Cycle, Season, Reactive)</li>
+          <li><strong>Skill System</strong> &mdash; Hot-pluggable modular capabilities for agents</li>
+          <li><strong>Workflow Engine</strong> &mdash; Multi-step pipelines with conditional branching and error recovery</li>
+          <li><strong>Security Layer</strong> &mdash; AES-256 encryption, RBAC, audit logging, rate limiting</li>
+          <li><strong>REST API + WebSocket</strong> &mdash; Full CRUD with real-time event streaming</li>
+          <li><strong>Next.js Dashboard</strong> &mdash; Visual management interface</li>
+        </ul>
+      </section>
+
+      <!-- Quick Start -->
+      <section class="doc-section" id="quick-start">
+        <h2><i data-lucide="zap"></i> Quick Start</h2>
+        <p>Get NexusMind running in under 60 seconds:</p>
+<pre><span class="comment"># Clone the repository</span>
+<span class="keyword">git</span> clone https://github.com/morningstarnasser/Nexusmindai.git
+<span class="keyword">cd</span> Nexusmindai
+
+<span class="comment"># Install dependencies</span>
+<span class="keyword">npm</span> install
+
+<span class="comment"># Configure environment</span>
+<span class="keyword">cp</span> .env.example .env
+<span class="comment"># Edit .env with your credentials</span>
+
+<span class="comment"># Build and start</span>
+<span class="keyword">npm</span> run build
+<span class="keyword">npm</span> run dev</pre>
+        <div class="callout callout-success"><i data-lucide="check-circle"></i> The server will start on <code>http://localhost:3000</code> by default. The dashboard runs on a separate port.</div>
+      </section>
+
+      <!-- Installation -->
+      <section class="doc-section" id="installation">
+        <h2><i data-lucide="download"></i> Installation</h2>
+        <h3>Prerequisites</h3>
+        <ul>
+          <li><strong>Node.js</strong> &ge; 20.0.0</li>
+          <li><strong>npm</strong> &ge; 9.0.0</li>
+          <li><strong>PostgreSQL</strong> (recommended: Neon Serverless)</li>
+        </ul>
+        <h3>From npm</h3>
+<pre><span class="keyword">npx</span> create-nexusmind@latest my-agents
+<span class="keyword">cd</span> my-agents
+<span class="keyword">npm</span> run dev</pre>
+        <h3>From Source</h3>
+<pre><span class="keyword">git</span> clone https://github.com/morningstarnasser/Nexusmindai.git
+<span class="keyword">cd</span> Nexusmindai
+<span class="keyword">npm</span> install
+<span class="keyword">npm</span> run build</pre>
+        <h3>With Docker</h3>
+<pre><span class="keyword">docker</span> compose up -d</pre>
+      </section>
+
+      <!-- Configuration -->
+      <section class="doc-section" id="configuration">
+        <h2><i data-lucide="settings"></i> Configuration</h2>
+        <p>NexusMind uses environment variables for configuration. Copy <code>.env.example</code> to <code>.env</code> and fill in your values.</p>
+        <table class="doc-table">
+          <thead><tr><th>Variable</th><th>Description</th><th>Required</th></tr></thead>
+          <tbody>
+            <tr><td><code>DATABASE_URL</code></td><td>PostgreSQL connection string (pooled)</td><td>Yes</td></tr>
+            <tr><td><code>TELEGRAM_BOT_TOKEN</code></td><td>Telegram Bot API token from @BotFather</td><td>For Telegram</td></tr>
+            <tr><td><code>DISCORD_BOT_TOKEN</code></td><td>Discord bot token from Developer Portal</td><td>For Discord</td></tr>
+            <tr><td><code>SLACK_BOT_TOKEN</code></td><td>Slack Bot OAuth token</td><td>For Slack</td></tr>
+            <tr><td><code>DEEPSEEK_API_KEY</code></td><td>DeepSeek LLM API key</td><td>For AI</td></tr>
+            <tr><td><code>GOOGLE_AI_API_KEY</code></td><td>Google Gemini API key</td><td>For AI</td></tr>
+            <tr><td><code>NVIDIA_API_KEY</code></td><td>NVIDIA NIM API key</td><td>For AI</td></tr>
+            <tr><td><code>JWT_SECRET</code></td><td>Secret for JWT token signing</td><td>For Auth</td></tr>
+            <tr><td><code>ENCRYPTION_KEY</code></td><td>AES-256 encryption key (32 bytes hex)</td><td>For Security</td></tr>
+            <tr><td><code>PORT</code></td><td>Server port (default: 3000)</td><td>No</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- Architecture -->
+      <section class="doc-section" id="architecture">
+        <h2><i data-lucide="cpu"></i> Architecture</h2>
+        <p>NexusMind follows a modular, event-driven architecture with clearly separated concerns:</p>
+<pre><span class="string">NexusMind/</span>
+  <span class="keyword">src/</span>
+    <span class="method">api/</span>          <span class="comment"># REST API + WebSocket server</span>
+    <span class="method">core/</span>         <span class="comment"># Agent manager, EventBus, orchestration</span>
+    <span class="method">gateway/</span>      <span class="comment"># Protocol adapters (12+ platforms)</span>
+    <span class="method">heartbeat/</span>    <span class="comment"># Autonomous task scheduler</span>
+    <span class="method">memory/</span>       <span class="comment"># Short-term, long-term, episodic memory</span>
+    <span class="method">monitoring/</span>   <span class="comment"># Metrics, health checks, alerts</span>
+    <span class="method">security/</span>     <span class="comment"># Encryption, RBAC, audit logging</span>
+    <span class="method">skills/</span>       <span class="comment"># Modular agent capabilities</span>
+    <span class="method">types/</span>        <span class="comment"># TypeScript type definitions</span>
+    <span class="method">utils/</span>        <span class="comment"># Logger, formatters, helpers</span>
+  <span class="keyword">dashboard/</span>    <span class="comment"># Next.js management UI</span></pre>
+        <p>The <strong>Gateway</strong> receives messages from any platform, normalizes them into a unified <code>NexusMessage</code> format, routes them through the <strong>Core Engine</strong> which manages agent lifecycles, and emits responses back through the gateway. The <strong>Heartbeat Engine</strong> runs independently, executing autonomous scheduled tasks.</p>
+      </section>
+
+      <!-- Agents -->
+      <section class="doc-section" id="agents">
+        <h2><i data-lucide="bot"></i> Agents</h2>
+        <p>Agents are the core entities in NexusMind. Each agent has a unique identity, personality, skill set, and platform bindings.</p>
+        <h3>Agent Lifecycle</h3>
+        <ol>
+          <li><strong>Create</strong> &mdash; Define agent via API or dashboard</li>
+          <li><strong>Configure</strong> &mdash; Set personality, skills, and platform bindings</li>
+          <li><strong>Deploy</strong> &mdash; Agent starts receiving messages from bound platforms</li>
+          <li><strong>Monitor</strong> &mdash; Track metrics, memory usage, and performance</li>
+          <li><strong>Update</strong> &mdash; Hot-reload configuration without downtime</li>
+        </ol>
+        <h3>Agent Configuration</h3>
+<pre>{
+  <span class="string">"name"</span>: <span class="string">"AssistantBot"</span>,
+  <span class="string">"description"</span>: <span class="string">"General purpose assistant"</span>,
+  <span class="string">"personality"</span>: <span class="string">"Helpful, concise, professional"</span>,
+  <span class="string">"skills"</span>: [<span class="string">"summarize"</span>, <span class="string">"translate"</span>, <span class="string">"search"</span>],
+  <span class="string">"platforms"</span>: [<span class="string">"telegram"</span>, <span class="string">"discord"</span>, <span class="string">"slack"</span>],
+  <span class="string">"memoryEnabled"</span>: <span class="keyword">true</span>,
+  <span class="string">"heartbeatTasks"</span>: []
+}</pre>
+      </section>
+
+      <!-- Gateway -->
+      <section class="doc-section" id="gateway">
+        <h2><i data-lucide="radio-tower"></i> Gateway &amp; Adapters</h2>
+        <p>The Gateway normalizes messages from any platform into the unified <code>NexusMessage</code> format. Each platform adapter handles the protocol-specific logic.</p>
+        <table class="doc-table">
+          <thead><tr><th>Adapter</th><th>Package</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>Telegram</td><td><code>node-telegram-bot-api</code></td><td>Active</td></tr>
+            <tr><td>Discord</td><td><code>discord.js</code></td><td>Active</td></tr>
+            <tr><td>Slack</td><td><code>@slack/bolt</code></td><td>Active</td></tr>
+            <tr><td>WhatsApp</td><td><code>whatsapp-web.js</code></td><td>Active</td></tr>
+            <tr><td>Teams</td><td><code>botbuilder</code></td><td>Active</td></tr>
+            <tr><td>Matrix</td><td><code>matrix-js-sdk</code></td><td>Active</td></tr>
+            <tr><td>IRC</td><td><code>irc</code></td><td>Active</td></tr>
+            <tr><td>Email</td><td><code>nodemailer</code> + <code>imap-simple</code></td><td>Active</td></tr>
+            <tr><td>SMS</td><td><code>twilio</code></td><td>Active</td></tr>
+            <tr><td>Signal</td><td><code>signal-cli</code></td><td>Active</td></tr>
+            <tr><td>Webhook</td><td>Built-in HTTP</td><td>Active</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- Memory System -->
+      <section class="doc-section" id="memory">
+        <h2><i data-lucide="brain"></i> Memory System</h2>
+        <p>NexusMind implements a three-tier memory architecture inspired by human cognition:</p>
+        <h3>Short-Term Memory</h3>
+        <p>In-memory context window for active conversations. Auto-expires after configurable TTL. Used for maintaining conversation continuity within a session.</p>
+        <h3>Long-Term Memory</h3>
+        <p>Vector-based storage with semantic search powered by PostgreSQL + pgvector. Stores facts, preferences, and knowledge that persist across sessions.</p>
+        <h3>Episodic Memory</h3>
+        <p>Records significant interactions and outcomes for experiential learning. Agents can recall past experiences to improve future responses.</p>
+<pre><span class="comment">// Store a memory</span>
+<span class="keyword">POST</span> /api/memory/store
+{
+  <span class="string">"agentId"</span>: <span class="string">"agent-001"</span>,
+  <span class="string">"content"</span>: <span class="string">"User prefers concise answers"</span>,
+  <span class="string">"tier"</span>: <span class="string">"long-term"</span>,
+  <span class="string">"metadata"</span>: { <span class="string">"category"</span>: <span class="string">"preference"</span> }
+}
+
+<span class="comment">// Search memories</span>
+<span class="keyword">POST</span> /api/memory/search
+{
+  <span class="string">"query"</span>: <span class="string">"user preferences"</span>,
+  <span class="string">"limit"</span>: <span class="number">10</span>
+}</pre>
+      </section>
+
+      <!-- Heartbeat Engine -->
+      <section class="doc-section" id="heartbeat">
+        <h2><i data-lucide="heart-pulse"></i> Heartbeat Engine</h2>
+        <p>The Heartbeat Engine enables proactive, autonomous agent behavior through intelligent task scheduling.</p>
+        <table class="doc-table">
+          <thead><tr><th>Heartbeat Type</th><th>Frequency</th><th>Use Case</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Pulse</strong></td><td>Seconds to minutes</td><td>Real-time monitoring, quick checks</td></tr>
+            <tr><td><strong>Rhythm</strong></td><td>Minutes to hours</td><td>Regular data syncs, status updates</td></tr>
+            <tr><td><strong>Cycle</strong></td><td>Hours to days</td><td>Daily reports, scheduled backups</td></tr>
+            <tr><td><strong>Season</strong></td><td>Weeks to months</td><td>Long-term analysis, model retraining</td></tr>
+            <tr><td><strong>Reactive</strong></td><td>Event-triggered</td><td>Respond to webhooks, alerts, thresholds</td></tr>
+          </tbody>
+        </table>
+        <div class="callout callout-warn"><i data-lucide="alert-triangle"></i> The engine automatically skips task execution when system load exceeds 90% CPU or 85% memory to prevent cascading failures.</div>
+      </section>
+
+      <!-- Skills -->
+      <section class="doc-section" id="skills">
+        <h2><i data-lucide="puzzle"></i> Skill System</h2>
+        <p>Skills are modular capabilities that can be attached to agents at runtime. They follow a plugin architecture that allows hot-loading without restarts.</p>
+<pre><span class="comment">// Example skill definition</span>
+{
+  <span class="string">"name"</span>: <span class="string">"summarize"</span>,
+  <span class="string">"version"</span>: <span class="string">"1.0.0"</span>,
+  <span class="string">"description"</span>: <span class="string">"Summarizes long texts"</span>,
+  <span class="string">"triggers"</span>: [<span class="string">"/summarize"</span>, <span class="string">"summarize this"</span>],
+  <span class="string">"handler"</span>: <span class="string">"./skills/summarize.js"</span>
+}</pre>
+      </section>
+
+      <!-- API Reference: Agents -->
+      <section class="doc-section" id="api-agents">
+        <h2><i data-lucide="bot"></i> API: Agents</h2>
+        <div class="endpoint"><span class="method method-get">GET</span> <code>/api/agents</code> <span class="endpoint-desc">List all agents</span></div>
+        <div class="endpoint"><span class="method method-post">POST</span> <code>/api/agents</code> <span class="endpoint-desc">Create a new agent</span></div>
+        <div class="endpoint"><span class="method method-get">GET</span> <code>/api/agents/:id</code> <span class="endpoint-desc">Get agent by ID</span></div>
+        <div class="endpoint"><span class="method method-put">PUT</span> <code>/api/agents/:id</code> <span class="endpoint-desc">Update agent</span></div>
+        <div class="endpoint"><span class="method method-delete">DELETE</span> <code>/api/agents/:id</code> <span class="endpoint-desc">Delete agent</span></div>
+      </section>
+
+      <!-- API Reference: Workflows -->
+      <section class="doc-section" id="api-workflows">
+        <h2><i data-lucide="git-branch"></i> API: Workflows</h2>
+        <div class="endpoint"><span class="method method-get">GET</span> <code>/api/workflows</code> <span class="endpoint-desc">List all workflows</span></div>
+        <div class="endpoint"><span class="method method-post">POST</span> <code>/api/workflows</code> <span class="endpoint-desc">Create workflow</span></div>
+        <div class="endpoint"><span class="method method-get">GET</span> <code>/api/workflows/:id</code> <span class="endpoint-desc">Get workflow by ID</span></div>
+        <div class="endpoint"><span class="method method-post">POST</span> <code>/api/workflows/:id/execute</code> <span class="endpoint-desc">Execute workflow</span></div>
+        <div class="endpoint"><span class="method method-delete">DELETE</span> <code>/api/workflows/:id</code> <span class="endpoint-desc">Delete workflow</span></div>
+      </section>
+
+      <!-- API Reference: Skills -->
+      <section class="doc-section" id="api-skills">
+        <h2><i data-lucide="puzzle"></i> API: Skills</h2>
+        <div class="endpoint"><span class="method method-get">GET</span> <code>/api/skills</code> <span class="endpoint-desc">List all skills</span></div>
+        <div class="endpoint"><span class="method method-post">POST</span> <code>/api/skills</code> <span class="endpoint-desc">Install a skill</span></div>
+        <div class="endpoint"><span class="method method-get">GET</span> <code>/api/skills/:id</code> <span class="endpoint-desc">Get skill details</span></div>
+        <div class="endpoint"><span class="method method-delete">DELETE</span> <code>/api/skills/:id</code> <span class="endpoint-desc">Uninstall skill</span></div>
+      </section>
+
+      <!-- API Reference: Memory -->
+      <section class="doc-section" id="api-memory">
+        <h2><i data-lucide="database"></i> API: Memory</h2>
+        <div class="endpoint"><span class="method method-get">GET</span> <code>/api/memory/stats</code> <span class="endpoint-desc">Memory statistics</span></div>
+        <div class="endpoint"><span class="method method-post">POST</span> <code>/api/memory/store</code> <span class="endpoint-desc">Store a memory</span></div>
+        <div class="endpoint"><span class="method method-post">POST</span> <code>/api/memory/search</code> <span class="endpoint-desc">Semantic search</span></div>
+        <div class="endpoint"><span class="method method-delete">DELETE</span> <code>/api/memory/:id</code> <span class="endpoint-desc">Delete memory</span></div>
+      </section>
+
+      <!-- API Reference: Heartbeat -->
+      <section class="doc-section" id="api-heartbeat">
+        <h2><i data-lucide="heart-pulse"></i> API: Heartbeat</h2>
+        <div class="endpoint"><span class="method method-get">GET</span> <code>/api/heartbeat</code> <span class="endpoint-desc">Engine status &amp; jobs</span></div>
+        <div class="endpoint"><span class="method method-get">GET</span> <code>/api/heartbeat/history</code> <span class="endpoint-desc">Execution history</span></div>
+        <div class="endpoint"><span class="method method-put">PUT</span> <code>/api/heartbeat/jobs/:id</code> <span class="endpoint-desc">Enable/disable job</span></div>
+        <div class="endpoint"><span class="method method-post">POST</span> <code>/api/heartbeat/pause</code> <span class="endpoint-desc">Pause all jobs</span></div>
+        <div class="endpoint"><span class="method method-post">POST</span> <code>/api/heartbeat/resume</code> <span class="endpoint-desc">Resume all jobs</span></div>
+      </section>
+
+      <!-- API Reference: System -->
+      <section class="doc-section" id="api-system">
+        <h2><i data-lucide="activity"></i> API: System</h2>
+        <div class="endpoint"><span class="method method-get">GET</span> <code>/api/system/health</code> <span class="endpoint-desc">Health check</span></div>
+        <div class="endpoint"><span class="method method-get">GET</span> <code>/api/system/metrics</code> <span class="endpoint-desc">System metrics</span></div>
+        <div class="endpoint"><span class="method method-post">POST</span> <code>/api/system/backup</code> <span class="endpoint-desc">Create backup</span></div>
+        <div class="endpoint"><span class="method method-get">GET</span> <code>/api/system/config</code> <span class="endpoint-desc">View config</span></div>
+      </section>
+
+      <!-- Platforms detail -->
+      <section class="doc-section" id="platforms">
+        <h2><i data-lucide="radio-tower"></i> Platform Adapters</h2>
+        <p>NexusMind supports 12 platform adapters out of the box. Each adapter normalizes platform-specific messages into the unified <code>NexusMessage</code> format.</p>
+        <div class="callout callout-info"><i data-lucide="lightbulb"></i> You can create custom adapters by extending the <code>ProtocolAdapter</code> base class. See the <a href="https://github.com/morningstarnasser/Nexusmindai/tree/main/src/gateway/adapters">adapter source code</a> for examples.</div>
+      </section>
+
+      <section class="doc-section" id="platform-telegram">
+        <h3>Telegram</h3>
+        <p>Uses <code>node-telegram-bot-api</code>. Supports text, media, inline keyboards, and callback queries.</p>
+<pre><span class="comment"># Required environment variable</span>
+TELEGRAM_BOT_TOKEN=<span class="string">your-bot-token-from-botfather</span></pre>
+      </section>
+
+      <section class="doc-section" id="platform-discord">
+        <h3>Discord</h3>
+        <p>Uses <code>discord.js</code> v14. Supports guilds, channels, DMs, embeds, components, and slash commands.</p>
+<pre><span class="comment"># Required environment variable</span>
+DISCORD_BOT_TOKEN=<span class="string">your-discord-bot-token</span></pre>
+      </section>
+
+      <section class="doc-section" id="platform-slack">
+        <h3>Slack</h3>
+        <p>Uses <code>@slack/bolt</code>. Supports channels, DMs, threads, blocks, and interactive components.</p>
+<pre><span class="comment"># Required environment variables</span>
+SLACK_BOT_TOKEN=<span class="string">xoxb-your-token</span>
+SLACK_SIGNING_SECRET=<span class="string">your-signing-secret</span>
+SLACK_APP_TOKEN=<span class="string">xapp-your-app-token</span></pre>
+      </section>
+
+      <!-- Deployment -->
+      <section class="doc-section" id="deploy-railway">
+        <h2><i data-lucide="cloud"></i> Deploy to Railway</h2>
+        <p>NexusMind can be deployed to Railway with one click:</p>
+        <ol>
+          <li>Fork the <a href="https://github.com/morningstarnasser/Nexusmindai">GitHub repository</a></li>
+          <li>Create a new Railway project and connect it to your fork</li>
+          <li>Set environment variables in Railway dashboard</li>
+          <li>Railway auto-builds on every push to <code>main</code></li>
+        </ol>
+        <div class="callout callout-success"><i data-lucide="check-circle"></i> The production instance is live at <a href="https://nexusmind-api-production.up.railway.app">nexusmind-api-production.up.railway.app</a></div>
+      </section>
+
+      <section class="doc-section" id="deploy-docker">
+        <h2><i data-lucide="container"></i> Deploy with Docker</h2>
+<pre><span class="comment"># Build and run</span>
+<span class="keyword">docker</span> compose up -d
+
+<span class="comment"># Or build manually</span>
+<span class="keyword">docker</span> build -t nexusmind .
+<span class="keyword">docker</span> run -p 3000:3000 --env-file .env nexusmind</pre>
+      </section>
+
+      <section class="doc-section" id="env-vars">
+        <h2><i data-lucide="key"></i> Environment Variables</h2>
+        <p>Full list of supported environment variables:</p>
+        <table class="doc-table">
+          <thead><tr><th>Variable</th><th>Default</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>PORT</code></td><td>3000</td><td>HTTP server port</td></tr>
+            <tr><td><code>HOST</code></td><td>0.0.0.0</td><td>Server bind address</td></tr>
+            <tr><td><code>NODE_ENV</code></td><td>development</td><td>Environment mode</td></tr>
+            <tr><td><code>DATABASE_URL</code></td><td>&mdash;</td><td>PostgreSQL connection (pooled)</td></tr>
+            <tr><td><code>DATABASE_URL_UNPOOLED</code></td><td>&mdash;</td><td>PostgreSQL connection (direct)</td></tr>
+            <tr><td><code>JWT_SECRET</code></td><td>&mdash;</td><td>JWT signing secret</td></tr>
+            <tr><td><code>ENCRYPTION_KEY</code></td><td>&mdash;</td><td>AES-256 key (32 bytes hex)</td></tr>
+            <tr><td><code>TELEGRAM_BOT_TOKEN</code></td><td>&mdash;</td><td>Telegram Bot API token</td></tr>
+            <tr><td><code>DISCORD_BOT_TOKEN</code></td><td>&mdash;</td><td>Discord bot token</td></tr>
+            <tr><td><code>SLACK_BOT_TOKEN</code></td><td>&mdash;</td><td>Slack Bot OAuth token</td></tr>
+            <tr><td><code>SLACK_SIGNING_SECRET</code></td><td>&mdash;</td><td>Slack request verification</td></tr>
+            <tr><td><code>SLACK_APP_TOKEN</code></td><td>&mdash;</td><td>Slack App-level token</td></tr>
+            <tr><td><code>DEEPSEEK_API_KEY</code></td><td>&mdash;</td><td>DeepSeek LLM API key</td></tr>
+            <tr><td><code>GOOGLE_AI_API_KEY</code></td><td>&mdash;</td><td>Google Gemini API key</td></tr>
+            <tr><td><code>NVIDIA_API_KEY</code></td><td>&mdash;</td><td>NVIDIA NIM API key</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <div class="doc-footer">
+        <p>NexusMind &copy; 2026 &mdash; MIT License &mdash; <a href="https://github.com/morningstarnasser/Nexusmindai">GitHub</a> &mdash; <a href="/">Home</a></p>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    lucide.createIcons();
+
+    // Active sidebar link on scroll
+    const sections = document.querySelectorAll('.doc-section');
+    const sidebarLinks = document.querySelectorAll('.sidebar-link');
+    window.addEventListener('scroll', () => {
+      let current = '';
+      sections.forEach(s => {
+        if (window.scrollY >= s.offsetTop - 100) current = s.id;
+      });
+      sidebarLinks.forEach(l => {
+        l.classList.remove('active');
+        if (l.getAttribute('href') === '#' + current) l.classList.add('active');
+      });
+    });
+
+    // Smooth scroll
+    sidebarLinks.forEach(l => {
+      l.addEventListener('click', (e) => {
+        e.preventDefault();
+        const target = document.querySelector(l.getAttribute('href'));
+        if (target) target.scrollIntoView({ behavior: 'smooth' });
+      });
     });
   </script>
 </body>
