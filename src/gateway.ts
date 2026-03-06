@@ -34,9 +34,12 @@ export class Gateway {
       await this.handleHeartbeat(agentId);
     });
 
-    // Serve dashboard static files
+    // Serve dashboard static files (works from both src/ and dist/)
     const __dirname = path.dirname(fileURLToPath(import.meta.url));
-    this.app.use(express.static(path.join(__dirname, '..', 'dashboard')));
+    const dashboardPath = path.join(__dirname, '..', 'dashboard');
+    const dashboardPathAlt = path.join(process.cwd(), 'dashboard');
+    this.app.use(express.static(dashboardPath));
+    this.app.use(express.static(dashboardPathAlt));
 
     this.setupRoutes();
     this.setupWebSocket();
@@ -271,7 +274,12 @@ export class Gateway {
         res.status(404).json({ ok: false, error: 'Not found' });
       } else {
         const __dirname = path.dirname(fileURLToPath(import.meta.url));
-        res.sendFile(path.join(__dirname, '..', 'dashboard', 'index.html'));
+        const file = path.join(__dirname, '..', 'dashboard', 'index.html');
+        const fileAlt = path.join(process.cwd(), 'dashboard', 'index.html');
+        import('fs').then(fs => {
+          const target = fs.existsSync(file) ? file : fileAlt;
+          res.sendFile(target);
+        });
       }
     });
   }
@@ -324,9 +332,11 @@ export class Gateway {
         log.info(`   Dashboard: ${url}`);
         this.heartbeat.start();
 
-        // Auto-open dashboard in browser
-        const cmd = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
-        exec(`${cmd} ${url}`);
+        // Auto-open dashboard in browser (only locally, not on Railway/production)
+        if (!process.env.RAILWAY_ENVIRONMENT && !process.env.PORT) {
+          const cmd = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
+          exec(`${cmd} ${url}`);
+        }
 
         resolve();
       });
