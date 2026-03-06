@@ -1,0 +1,134 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <defs>
+    <radialGradient id="brainGlow" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" style="stop-color:#a78bfa;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#7c3aed;stop-opacity:0.8" />
+      <stop offset="100%" style="stop-color:#4c1d95;stop-opacity:0.3" />
+    </radialGradient>
+    <radialGradient id="eyeGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#22d3ee;stop-opacity:1" />
+      <stop offset="70%" style="stop-color:#06b6d4;stop-opacity:0.8" />
+      <stop offset="100%" style="stop-color:#0891b2;stop-opacity:0.5" />
+    </radialGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="softGlow">
+      <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <linearGradient id="tentacleGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:0.9" />
+      <stop offset="100%" style="stop-color:#06b6d4;stop-opacity:0.3" />
+    </linearGradient>
+    <linearGradient id="tentacleGrad2" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#a78bfa;stop-opacity:0.9" />
+      <stop offset="100%" style="stop-color:#22d3ee;stop-opacity:0.3" />
+    </linearGradient>
+    <linearGradient id="circuitGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#22d3ee;stop-opacity:0.8" />
+      <stop offset="100%" style="stop-color:#a78bfa;stop-opacity:0.8" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background circle aura -->
+  <circle cx="200" cy="185" r="140" fill="url(#brainGlow)" opacity="0.15" filter="url(#softGlow)"/>
+
+  <!-- Neural tentacles (8 tentacles like octopus) -->
+  <!-- Left tentacles -->
+  <path d="M 145 230 Q 100 270 70 320 Q 55 345 65 355 Q 75 365 85 350 Q 100 320 130 280"
+        fill="none" stroke="url(#tentacleGrad1)" stroke-width="8" stroke-linecap="round" filter="url(#glow)"/>
+  <path d="M 125 240 Q 70 260 35 290 Q 15 310 25 320 Q 35 330 50 310 Q 80 275 130 255"
+        fill="none" stroke="url(#tentacleGrad2)" stroke-width="7" stroke-linecap="round" filter="url(#glow)"/>
+  <path d="M 150 220 Q 95 230 50 245 Q 25 255 30 268 Q 38 278 55 265 Q 90 245 150 235"
+        fill="none" stroke="url(#tentacleGrad1)" stroke-width="6" stroke-linecap="round" filter="url(#glow)"/>
+  <path d="M 135 250 Q 85 300 55 350 Q 45 370 55 375 Q 68 378 72 360 Q 95 310 140 268"
+        fill="none" stroke="url(#tentacleGrad2)" stroke-width="7" stroke-linecap="round" filter="url(#glow)"/>
+
+  <!-- Right tentacles -->
+  <path d="M 255 230 Q 300 270 330 320 Q 345 345 335 355 Q 325 365 315 350 Q 300 320 270 280"
+        fill="none" stroke="url(#tentacleGrad1)" stroke-width="8" stroke-linecap="round" filter="url(#glow)"/>
+  <path d="M 275 240 Q 330 260 365 290 Q 385 310 375 320 Q 365 330 350 310 Q 320 275 270 255"
+        fill="none" stroke="url(#tentacleGrad2)" stroke-width="7" stroke-linecap="round" filter="url(#glow)"/>
+  <path d="M 250 220 Q 305 230 350 245 Q 375 255 370 268 Q 362 278 345 265 Q 310 245 250 235"
+        fill="none" stroke="url(#tentacleGrad1)" stroke-width="6" stroke-linecap="round" filter="url(#glow)"/>
+  <path d="M 265 250 Q 315 300 345 350 Q 355 370 345 375 Q 332 378 328 360 Q 305 310 260 268"
+        fill="none" stroke="url(#tentacleGrad2)" stroke-width="7" stroke-linecap="round" filter="url(#glow)"/>
+
+  <!-- Neural connection dots on tentacles -->
+  <circle cx="70" cy="320" r="4" fill="#22d3ee" filter="url(#glow)" opacity="0.9"/>
+  <circle cx="35" cy="290" r="3" fill="#a78bfa" filter="url(#glow)" opacity="0.8"/>
+  <circle cx="50" cy="250" r="3" fill="#22d3ee" filter="url(#glow)" opacity="0.7"/>
+  <circle cx="55" cy="355" r="4" fill="#a78bfa" filter="url(#glow)" opacity="0.9"/>
+  <circle cx="330" cy="320" r="4" fill="#22d3ee" filter="url(#glow)" opacity="0.9"/>
+  <circle cx="365" cy="290" r="3" fill="#a78bfa" filter="url(#glow)" opacity="0.8"/>
+  <circle cx="350" cy="250" r="3" fill="#22d3ee" filter="url(#glow)" opacity="0.7"/>
+  <circle cx="345" cy="355" r="4" fill="#a78bfa" filter="url(#glow)" opacity="0.9"/>
+
+  <!-- Main head/brain body -->
+  <ellipse cx="200" cy="175" rx="85" ry="95" fill="#1e1b4b" stroke="#7c3aed" stroke-width="2" opacity="0.95"/>
+
+  <!-- Brain texture lines -->
+  <path d="M 145 155 Q 175 140 200 155 Q 225 170 255 155" fill="none" stroke="#6d28d9" stroke-width="1.5" opacity="0.5"/>
+  <path d="M 140 175 Q 170 160 200 175 Q 230 190 260 175" fill="none" stroke="#6d28d9" stroke-width="1.5" opacity="0.5"/>
+  <path d="M 145 195 Q 175 180 200 195 Q 225 210 255 195" fill="none" stroke="#6d28d9" stroke-width="1.5" opacity="0.5"/>
+  <path d="M 155 135 Q 180 120 200 135 Q 220 150 245 135" fill="none" stroke="#6d28d9" stroke-width="1.5" opacity="0.4"/>
+  <path d="M 160 215 Q 185 200 200 215 Q 215 230 240 215" fill="none" stroke="#6d28d9" stroke-width="1.5" opacity="0.4"/>
+
+  <!-- Circuit pattern on forehead -->
+  <path d="M 180 120 L 180 108 L 195 108 L 195 100 M 220 120 L 220 108 L 205 108 L 205 100"
+        fill="none" stroke="url(#circuitGrad)" stroke-width="1.5" opacity="0.7" filter="url(#glow)"/>
+  <circle cx="195" cy="100" r="2" fill="#22d3ee" opacity="0.9"/>
+  <circle cx="205" cy="100" r="2" fill="#22d3ee" opacity="0.9"/>
+
+  <!-- Eyes -->
+  <!-- Left eye -->
+  <ellipse cx="172" cy="170" rx="22" ry="24" fill="#0f172a" stroke="#06b6d4" stroke-width="1.5"/>
+  <ellipse cx="172" cy="170" rx="14" ry="15" fill="url(#eyeGlow)" filter="url(#glow)"/>
+  <ellipse cx="172" cy="168" rx="6" ry="7" fill="#0f172a"/>
+  <ellipse cx="175" cy="165" rx="3" ry="3" fill="white" opacity="0.9"/>
+
+  <!-- Right eye -->
+  <ellipse cx="228" cy="170" rx="22" ry="24" fill="#0f172a" stroke="#06b6d4" stroke-width="1.5"/>
+  <ellipse cx="228" cy="170" rx="14" ry="15" fill="url(#eyeGlow)" filter="url(#glow)"/>
+  <ellipse cx="228" cy="168" rx="6" ry="7" fill="#0f172a"/>
+  <ellipse cx="231" cy="165" rx="3" ry="3" fill="white" opacity="0.9"/>
+
+  <!-- Friendly smile -->
+  <path d="M 180 200 Q 200 218 220 200" fill="none" stroke="#a78bfa" stroke-width="2.5" stroke-linecap="round"/>
+
+  <!-- Small antenna/neural spike on top -->
+  <path d="M 200 82 L 200 60" fill="none" stroke="#7c3aed" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="200" cy="55" r="6" fill="#7c3aed" filter="url(#glow)"/>
+  <circle cx="200" cy="55" r="3" fill="#a78bfa"/>
+
+  <!-- Floating neural particles -->
+  <circle cx="120" cy="120" r="2" fill="#22d3ee" opacity="0.6" filter="url(#glow)">
+    <animate attributeName="opacity" values="0.3;0.8;0.3" dur="3s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="280" cy="130" r="2.5" fill="#a78bfa" opacity="0.5" filter="url(#glow)">
+    <animate attributeName="opacity" values="0.5;1;0.5" dur="2.5s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="100" cy="200" r="2" fill="#22d3ee" opacity="0.4" filter="url(#glow)">
+    <animate attributeName="opacity" values="0.2;0.7;0.2" dur="4s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="300" cy="190" r="1.5" fill="#a78bfa" opacity="0.6" filter="url(#glow)">
+    <animate attributeName="opacity" values="0.4;0.9;0.4" dur="3.5s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="155" cy="90" r="1.5" fill="#06b6d4" opacity="0.5" filter="url(#glow)">
+    <animate attributeName="opacity" values="0.3;0.8;0.3" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="245" cy="85" r="2" fill="#8b5cf6" opacity="0.5" filter="url(#glow)">
+    <animate attributeName="opacity" values="0.4;0.9;0.4" dur="2.8s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- Name text -->
+  <text x="200" y="390" text-anchor="middle" font-family="monospace" font-size="28" font-weight="bold" fill="#a78bfa" filter="url(#glow)">NEXO</text>
+</svg>

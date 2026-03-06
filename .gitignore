@@ -8,3 +8,8 @@ data/logs/*.log
 .next/
 coverage/
 .DS_Store
+*.db
+*.db-shm
+*.db-wal
+.claude/settings.local.json
+PUSH_TO_GITHUB.sh

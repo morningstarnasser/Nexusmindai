@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexusMind Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(124, 58, 237, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0); }
+        }
+        .pulse-ring {
+            animation: pulse-ring 2s infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+        .nexo-float { animation: float 3s ease-in-out infinite; }
+        @keyframes tentacle-glow {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+        .tentacle-glow { animation: tentacle-glow 2s ease-in-out infinite; }
+        .connection-status {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .connection-status.connected {
+            background-color: #10b981;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+        }
+        .connection-status.disconnected {
+            background-color: #ef4444;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+        }
+        .terminal-text {
+            font-family: 'Courier New', monospace;
+            color: #10b981;
+            background: #0f172a;
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .agent-card {
+            transition: all 0.3s ease;
+        }
+        .agent-card:hover {
+            transform: translateY(-4px);
+        }
+        .message-bubble {
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .activity-item {
+            border-left: 3px solid #7c3aed;
+            padding-left: 1rem;
+            animation: slideIn 0.3s ease-out;
+        }
+        .nexus-logo {
+            font-weight: bold;
+            background: linear-gradient(135deg, #7c3aed, #22d3ee);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 1.5rem;
+        }
+        .tab-button {
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+        .tab-button.active {
+            border-bottom-color: #7c3aed;
+            color: #a78bfa;
+        }
+        .tab-button:hover:not(.active) {
+            color: #22d3ee;
+        }
+        .nexo-accent { color: #a78bfa; }
+        .nexo-cyan { color: #22d3ee; }
+        .nexo-violet { color: #7c3aed; }
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans">
+    <div id="app" class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-slate-800 border-b border-slate-700 sticky top-0 z-40">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <div class="nexo-float">
+                            <img src="nexo-mascot.svg" alt="NEXO" width="42" height="42" style="filter: drop-shadow(0 0 8px rgba(124,58,237,0.5));">
+                        </div>
+                        <div>
+                            <h1 class="nexus-logo text-xl">NexusMind</h1>
+                            <p class="text-xs text-slate-400">The Ultimate Autonomous AI Agent Platform</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="text-right">
+                            <div class="flex items-center justify-end gap-2">
+                                <span class="connection-status" id="connectionStatus"></span>
+                                <span class="text-sm" id="connectionText">Connecting...</span>
+                            </div>
+                            <p class="text-xs text-slate-400" id="apiVersion">API: Loading...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="bg-slate-800 border-b border-slate-700">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex gap-8">
+                    <button class="tab-button active py-4 px-1" data-tab="dashboard">
+                        <span class="text-lg">📊 Dashboard</span>
+                    </button>
+                    <button class="tab-button py-4 px-1" data-tab="agents">
+                        <span class="text-lg">🤖 Agents</span>
+                    </button>
+                    <button class="tab-button py-4 px-1" data-tab="chat">
+                        <span class="text-lg">💬 Chat</span>
+                    </button>
+                    <button class="tab-button py-4 px-1" data-tab="heartbeat">
+                        <span class="text-lg">❤️ Heartbeat</span>
+                    </button>
+                    <button class="tab-button py-4 px-1" data-tab="settings">
+                        <span class="text-lg">⚙️ Settings</span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Dashboard Tab -->
+            <div id="dashboard-tab" class="tab-content">
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
+                    <!-- System Status Card -->
+                    <div class="lg:col-span-2 bg-slate-800 rounded-lg border border-slate-700 p-6">
+                        <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                            <span>🖥️</span> System Status
+                        </h2>
+                        <div class="space-y-3">
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Version:</span>
+                                <span class="terminal-text" id="sysVersion">N/A</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Uptime:</span>
+                                <span class="terminal-text" id="sysUptime">Calculating...</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Connections:</span>
+                                <span class="terminal-text" id="sysConnections">0</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Agents:</span>
+                                <span class="terminal-text" id="sysAgents">0</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Total Messages:</span>
+                                <span class="terminal-text" id="sysTotalMessages">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Stats -->
+                    <div class="lg:col-span-2 bg-slate-800 rounded-lg border border-slate-700 p-6">
+                        <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                            <span>📈</span> Quick Stats
+                        </h2>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-slate-700 rounded p-4">
+                                <p class="text-slate-400 text-sm">Active Agents</p>
+                                <p class="text-2xl font-bold text-green-400" id="statsActiveAgents">0</p>
+                            </div>
+                            <div class="bg-slate-700 rounded p-4">
+                                <p class="text-slate-400 text-sm">Total Channels</p>
+                                <p class="text-2xl font-bold text-cyan-400" id="statsTotalChannels">0</p>
+                            </div>
+                            <div class="bg-slate-700 rounded p-4">
+                                <p class="text-slate-400 text-sm">API Calls (24h)</p>
+                                <p class="text-2xl font-bold text-purple-400" id="statsApiCalls">0</p>
+                            </div>
+                            <div class="bg-slate-700 rounded p-4">
+                                <p class="text-slate-400 text-sm">Errors (24h)</p>
+                                <p class="text-2xl font-bold text-red-400" id="statsErrors">0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Agent Overview Cards -->
+                <div class="mb-8">
+                    <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                        <span>🤖</span> Agent Overview
+                    </h2>
+                    <div id="dashboardAgentCards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="bg-slate-800 rounded-lg border border-slate-700 p-6 text-center text-slate-400">
+                            Loading agents...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Activity Feed -->
+                <div class="bg-slate-800 rounded-lg border border-slate-700 p-6">
+                    <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                        <span>📰</span> Activity Feed
+                    </h2>
+                    <div id="activityFeed" class="space-y-3 max-h-96 overflow-y-auto">
+                        <p class="text-slate-400 text-sm">Waiting for activity...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Agents Tab -->
+            <div id="agents-tab" class="tab-content hidden">
+                <div class="mb-6">
+                    <button id="createAgentBtn" class="bg-violet-600 hover:bg-violet-700 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 shadow-lg shadow-violet-500/20">
+                        <span>➕</span> Create Agent
+                    </button>
+                </div>
+
+                <div id="agentsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div class="bg-slate-800 rounded-lg border border-slate-700 p-6 text-center text-slate-400">
+                        Loading agents...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Tab -->
+            <div id="chat-tab" class="tab-content hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                    <!-- Agent Selector -->
+                    <div class="lg:col-span-1">
+                        <div class="bg-slate-800 rounded-lg border border-slate-700 p-4 sticky top-24">
+                            <h3 class="font-bold mb-3">Select Agent</h3>
+                            <select id="chatAgentSelect" class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white">
+                                <option value="">Choose an agent...</option>
+                            </select>
+                            <div id="selectedAgentInfo" class="mt-4 text-sm text-slate-400 hidden">
+                                <p class="mb-2">Agent Details:</p>
+                                <div id="agentDetailDisplay"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chat Interface -->
+                    <div class="lg:col-span-3">
+                        <div class="bg-slate-800 rounded-lg border border-slate-700 h-screen lg:h-auto lg:max-h-96 flex flex-col">
+                            <div class="border-b border-slate-700 p-4 font-bold" id="chatHeader">
+                                💬 Chat
+                            </div>
+                            <div id="chatMessages" class="flex-1 overflow-y-auto p-4 space-y-3">
+                                <p class="text-slate-400 text-sm">Select an agent to start chatting</p>
+                            </div>
+                            <div class="border-t border-slate-700 p-4">
+                                <div class="flex gap-2">
+                                    <input id="chatInput" type="text" placeholder="Type your message..." class="flex-1 bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white" disabled>
+                                    <button id="chatSendBtn" class="bg-violet-600 hover:bg-violet-700 text-white font-bold py-2 px-4 rounded-lg" disabled>
+                                        Send
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Heartbeat Tab -->
+            <div id="heartbeat-tab" class="tab-content hidden">
+                <div class="mb-6">
+                    <button id="runHeartbeatBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2">
+                        <span>▶️</span> Run Heartbeat
+                    </button>
+                </div>
+
+                <div id="heartbeatList" class="space-y-4">
+                    <div class="bg-slate-800 rounded-lg border border-slate-700 p-6 text-center text-slate-400">
+                        Loading heartbeat data...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div id="settings-tab" class="tab-content hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Config Settings -->
+                    <div class="bg-slate-800 rounded-lg border border-slate-700 p-6">
+                        <h2 class="text-xl font-bold mb-4">Gateway Config</h2>
+                        <div id="configDisplay" class="space-y-3">
+                            <p class="text-slate-400">Loading configuration...</p>
+                        </div>
+                    </div>
+
+                    <!-- Model Providers -->
+                    <div class="bg-slate-800 rounded-lg border border-slate-700 p-6">
+                        <h2 class="text-xl font-bold mb-4">Model Providers</h2>
+                        <div id="providersDisplay" class="space-y-3">
+                            <p class="text-slate-400">Loading providers...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-slate-800 border-t border-slate-700 mt-8">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div class="flex items-center gap-3">
+                        <img src="nexo-mascot.svg" alt="NEXO" width="32" height="32" style="filter: drop-shadow(0 0 6px rgba(124,58,237,0.4));">
+                        <div>
+                            <span class="nexus-logo text-sm">NexusMind</span>
+                            <span class="text-slate-500 text-xs ml-2">v1.0.0</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 text-sm">
+                        <span class="text-slate-400">Created by</span>
+                        <a href="https://github.com/morningstarnasser" target="_blank" rel="noopener" class="flex items-center gap-2 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-full transition-colors group">
+                            <img src="https://github.com/morningstarnasser.png" alt="Ali Nasser Morningstar" width="24" height="24" class="rounded-full ring-2 ring-violet-500/50" onerror="this.style.display='none'">
+                            <span class="text-violet-300 group-hover:text-violet-200 font-medium">Ali Nasser Morningstar</span>
+                            <svg class="w-4 h-4 text-slate-400 group-hover:text-cyan-400 transition-colors" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                        </a>
+                    </div>
+                    <div class="text-xs text-slate-500">
+                        MIT License &copy; 2026
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Create Agent Modal -->
+    <div id="createAgentModal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+        <div class="modal-overlay absolute inset-0"></div>
+        <div class="relative bg-slate-800 rounded-lg border border-slate-700 p-8 max-w-md w-full mx-4">
+            <h2 class="text-2xl font-bold mb-6">Create Agent</h2>
+            <form id="createAgentForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Agent ID</label>
+                    <input type="text" id="agentId" placeholder="unique-agent-id" class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Agent Name</label>
+                    <input type="text" id="agentName" placeholder="My AI Agent" class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Emoji</label>
+                    <input type="text" id="agentEmoji" placeholder="🤖" class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Model</label>
+                    <input type="text" id="agentModel" placeholder="gpt-4" class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white" required>
+                </div>
+                <div class="flex gap-4 pt-4">
+                    <button type="submit" class="flex-1 bg-violet-600 hover:bg-violet-700 text-white font-bold py-2 px-4 rounded-lg">
+                        Create
+                    </button>
+                    <button type="button" id="closeModalBtn" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-4 rounded-lg">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Agent Detail Modal -->
+    <div id="agentDetailModal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+        <div class="modal-overlay absolute inset-0"></div>
+        <div class="relative bg-slate-800 rounded-lg border border-slate-700 p-8 max-w-2xl w-full mx-4 max-h-96 overflow-y-auto">
+            <button id="closeDetailModal" class="absolute top-4 right-4 text-slate-400 hover:text-white text-2xl">×</button>
+            <div id="agentDetailContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_BASE = 'http://localhost:4848/api/v1';
+        const WS_BASE = 'ws://localhost:4848';
+
+        // State Management
+        const state = {
+            connected: false,
+            agents: [],
+            selectedAgent: null,
+            config: null,
+            chatMessages: [],
+            activityLog: [],
+            systemStats: {
+                version: 'N/A',
+                uptime: 0,
+                connections: 0,
+                totalMessages: 0
+            }
+        };
+
+        let ws = null;
+        let heartbeatInterval = null;
+
+        // Utility Functions
+        const log = (msg, type = 'info') => {
+            console.log(`[${type.toUpperCase()}] ${msg}`);
+        };
+
+        const showNotification = (message, type = 'info') => {
+            const bgColor = {
+                'success': 'bg-green-600',
+                'error': 'bg-red-600',
+                'info': 'bg-violet-600',
+                'warning': 'bg-yellow-600'
+            }[type] || 'bg-blue-600';
+            
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-pulse`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => notification.remove(), 3000);
+        };
+
+        const formatTime = (ms) => {
+            const seconds = Math.floor(ms / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const hours = Math.floor(minutes / 60);
+            const days = Math.floor(hours / 24);
+            
+            if (days > 0) return `${days}d ${hours % 24}h`;
+            if (hours > 0) return `${hours}h ${minutes % 60}m`;
+            if (minutes > 0) return `${minutes}m ${seconds % 60}s`;
+            return `${seconds}s`;
+        };
+
+        // API Functions
+        const api = {
+            async getStatus() {
+                try {
+                    const response = await fetch(`${API_BASE}/status`, {
+                        signal: AbortSignal.timeout(5000)
+                    });
+                    if (!response.ok) throw new Error('Status fetch failed');
+                    return await response.json();
+                } catch (err) {
+                    log(`Status fetch failed: ${err.message}`, 'error');
+                    return null;
+                }
+            },
+
+            async getAgents() {
+                try {
+                    const response = await fetch(`${API_BASE}/agents`, {
+                        signal: AbortSignal.timeout(5000)
+                    });
+                    if (!response.ok) throw new Error('Failed to fetch agents');
+                    return await response.json();
+                } catch (err) {
+                    log(`Failed to fetch agents: ${err.message}`, 'error');
+                    return [];
+                }
+            },
+
+            async createAgent(agentData) {
+                try {
+                    const response = await fetch(`${API_BASE}/agents`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(agentData),
+                        signal: AbortSignal.timeout(5000)
+                    });
+                    if (!response.ok) throw new Error('Failed to create agent');
+                    return await response.json();
+                } catch (err) {
+                    log(`Failed to create agent: ${err.message}`, 'error');
+                    throw err;
+                }
+            },
+
+            async deleteAgent(agentId) {
+                try {
+                    const response = await fetch(`${API_BASE}/agents/${agentId}`, {
+                        method: 'DELETE',
+                        signal: AbortSignal.timeout(5000)
+                    });
+                    if (!response.ok) throw new Error('Failed to delete agent');
+                    return true;
+                } catch (err) {
+                    log(`Failed to delete agent: ${err.message}`, 'error');
+                    throw err;
+                }
+            },
+
+            async getAgentDetails(agentId) {
+                try {
+                    const response = await fetch(`${API_BASE}/agents/${agentId}`, {
+                        signal: AbortSignal.timeout(5000)
+                    });
+                    if (!response.ok) throw new Error('Failed to fetch agent details');
+                    return await response.json();
+                } catch (err) {
+                    log(`Failed to fetch agent details: ${err.message}`, 'error');
+                    return null;
+                }
+            },
+
+            async sendMessage(agentId, message) {
+                try {
+                    const response = await fetch(`${API_BASE}/agents/${agentId}/message`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ message }),
+                        signal: AbortSignal.timeout(10000)
+                    });
+                    if (!response.ok) throw new Error('Failed to send message');
+                    return await response.json();
+                } catch (err) {
+                    log(`Failed to send message: ${err.message}`, 'error');
+                    throw err;
+                }
+            },
+
+            async getConfig() {
+                try {
+                    const response = await fetch(`${API_BASE}/config`, {
+                        signal: AbortSignal.timeout(5000)
+                    });
+                    if (!response.ok) throw new Error('Failed to fetch config');
+                    return await response.json();
+                } catch (err) {
+                    log(`Failed to fetch config: ${err.message}`, 'error');
+                    return null;
+                }
+            },
+
+            async getHeartbeat() {
+                try {
+                    const response = await fetch(`${API_BASE}/heartbeat`, {
+                        signal: AbortSignal.timeout(5000)
+                    });
+                    if (!response.ok) throw new Error('Failed to fetch heartbeat');
+                    return await response.json();
+                } catch (err) {
+                    log(`Failed to fetch heartbeat: ${err.message}`, 'error');
+                    return { tasks: [] };
+                }
+            },
+
+            async runHeartbeat() {
+                try {
+                    const response = await fetch(`${API_BASE}/heartbeat/run`, {
+                        method: 'POST',
+                        signal: AbortSignal.timeout(10000)
+                    });
+                    if (!response.ok) throw new Error('Failed to run heartbeat');
+                    return await response.json();
+                } catch (err) {
+                    log(`Failed to run heartbeat: ${err.message}`, 'error');
+                    throw err;
+                }
+            }
+        };
+
+        // WebSocket Management
+        const initWebSocket = () => {
+            try {
+                ws = new WebSocket(WS_BASE);
+                
+                ws.onopen = () => {
+                    state.connected = true;
+                    updateConnectionStatus();
+                    log('WebSocket connected', 'success');
+                    showNotification('Connected to NexusMind Gateway', 'success');
+                };
+
+                ws.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        handleWebSocketMessage(data);
+                    } catch (err) {
+                        log(`Failed to parse WebSocket message: ${err.message}`, 'error');
+                    }
+                };
+
+                ws.onerror = (error) => {
+                    log(`WebSocket error: ${error}`, 'error');
+                };
+
+                ws.onclose = () => {
+                    state.connected = false;
+                    updateConnectionStatus();
+                    log('WebSocket disconnected', 'warning');
+                    setTimeout(initWebSocket, 3000);
+                };
+            } catch (err) {
+                log(`Failed to initialize WebSocket: ${err.message}`, 'error');
+                setTimeout(initWebSocket, 3000);
+            }
+        };
+
+        const handleWebSocketMessage = (data) => {
+            if (!data.type) return;
+
+            switch (data.type) {
+                case 'agent_created':
+                    addActivityLog(`Agent created: ${data.agent?.name || 'Unknown'}`, 'success');
+                    loadAgents();
+                    break;
+                case 'agent_deleted':
+                    addActivityLog(`Agent deleted: ${data.agent?.name || 'Unknown'}`, 'warning');
+                    loadAgents();
+                    break;
+                case 'message':
+                    if (state.selectedAgent?.id === data.agent_id) {
+                        addChatMessage(data.sender || 'Agent', data.content || '', 'received');
+                    }
+                    break;
+                case 'status_update':
+                    updateSystemStats(data);
+                    break;
+                default:
+                    log(`Unknown WebSocket message type: ${data.type}`);
+            }
+        };
+
+        // UI Update Functions
+        const updateConnectionStatus = () => {
+            const statusEl = document.getElementById('connectionStatus');
+            const textEl = document.getElementById('connectionText');
+            
+            if (state.connected) {
+                statusEl.className = 'connection-status connected';
+                textEl.textContent = 'Connected';
+            } else {
+                statusEl.className = 'connection-status disconnected';
+                textEl.textContent = 'Disconnected';
+            }
+        };
+
+        const switchTab = (tabName) => {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-button').forEach(el => el.classList.remove('active'));
+            
+            const contentEl = document.getElementById(`${tabName}-tab`);
+            if (contentEl) contentEl.classList.remove('hidden');
+            
+            const buttonEl = document.querySelector(`[data-tab="${tabName}"]`);
+            if (buttonEl) buttonEl.classList.add('active');
+
+            if (tabName === 'agents') loadAgents();
+            if (tabName === 'chat') loadChatAgents();
+            if (tabName === 'heartbeat') loadHeartbeatData();
+            if (tabName === 'settings') loadSettings();
+        };
+
+        const addActivityLog = (message, type = 'info') => {
+            const timestamp = new Date().toLocaleTimeString();
+            state.activityLog.unshift({ message, type, timestamp });
+            state.activityLog = state.activityLog.slice(0, 50);
+
+            const feed = document.getElementById('activityFeed');
+            const item = document.createElement('div');
+            item.className = `activity-item text-sm ${type === 'error' ? 'border-red-500' : 'border-violet-500'}`;
+            item.innerHTML = `
+                <div class="flex justify-between">
+                    <span>${message}</span>
+                    <span class="text-slate-500 text-xs">${timestamp}</span>
+                </div>
+            `;
+            feed.insertBefore(item, feed.firstChild);
+            
+            if (feed.children.length > 20) {
+                feed.removeChild(feed.lastChild);
+            }
+        };
+
+        const updateSystemStats = (data) => {
+            if (data.version) state.systemStats.version = data.version;
+            if (data.uptime !== undefined) state.systemStats.uptime = data.uptime;
+            if (data.connections !== undefined) state.systemStats.connections = data.connections;
+            if (data.agents !== undefined) state.systemStats.agents = data.agents;
+            if (data.totalMessages !== undefined) state.systemStats.totalMessages = data.totalMessages;
+
+            document.getElementById('sysVersion').textContent = state.systemStats.version;
+            document.getElementById('sysUptime').textContent = formatTime(state.systemStats.uptime);
+            document.getElementById('sysConnections').textContent = state.systemStats.connections;
+            document.getElementById('sysAgents').textContent = state.systemStats.agents || state.agents.length;
+            document.getElementById('sysTotalMessages').textContent = state.systemStats.totalMessages;
+        };
+
+        const addChatMessage = (sender, content, direction = 'sent') => {
+            state.chatMessages.push({ sender, content, direction, timestamp: new Date() });
+            
+            const messagesEl = document.getElementById('chatMessages');
+            const msgEl = document.createElement('div');
+            msgEl.className = `message-bubble ${direction === 'sent' ? 'text-right' : 'text-left'}`;
+            msgEl.innerHTML = `
+                <div class="inline-block ${direction === 'sent' ? 'bg-violet-600' : 'bg-slate-700'} rounded-lg px-4 py-2 max-w-xs">
+                    <p class="text-xs text-slate-300 mb-1">${sender}</p>
+                    <p class="text-white break-words">${escapeHtml(content)}</p>
+                </div>
+            `;
+            messagesEl.appendChild(msgEl);
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+        };
+
+        const escapeHtml = (text) => {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        };
+
+        const createAgentCard = (agent) => {
+            const card = document.createElement('div');
+            card.className = 'agent-card bg-slate-800 rounded-lg border border-slate-700 p-4 hover:border-violet-500';
+            card.innerHTML = `
+                <div class="flex justify-between items-start mb-3">
+                    <div>
+                        <p class="text-2xl">${agent.emoji || '🤖'}</p>
+                        <h3 class="font-bold text-lg">${agent.name || agent.id}</h3>
+                    </div>
+                    <span class="text-xs px-2 py-1 rounded-full ${agent.status === 'active' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}">
+                        ${agent.status || 'unknown'}
+                    </span>
+                </div>
+                <p class="text-sm text-slate-400 mb-3">${agent.model || 'N/A'}</p>
+                <div class="text-xs text-slate-400 space-y-1 mb-4">
+                    <p>Channels: ${agent.channels?.length || 0}</p>
+                    <p>Messages: ${agent.messageCount || 0}</p>
+                </div>
+                <div class="flex gap-2">
+                    <button class="flex-1 bg-slate-700 hover:bg-slate-600 text-white text-sm py-1 rounded view-agent-btn" data-agent-id="${agent.id}">
+                        View
+                    </button>
+                    <button class="flex-1 bg-red-600 hover:bg-red-700 text-white text-sm py-1 rounded delete-agent-btn" data-agent-id="${agent.id}">
+                        Delete
+                    </button>
+                </div>
+            `;
+
+            const viewBtn = card.querySelector('.view-agent-btn');
+            viewBtn.addEventListener('click', () => viewAgentDetails(agent.id));
+
+            const deleteBtn = card.querySelector('.delete-agent-btn');
+            deleteBtn.addEventListener('click', () => deleteAgentHandler(agent.id));
+
+            return card;
+        };
+
+        const viewAgentDetails = async (agentId) => {
+            const details = await api.getAgentDetails(agentId);
+            if (!details) {
+                showNotification('Failed to load agent details', 'error');
+                return;
+            }
+
+            const modal = document.getElementById('agentDetailModal');
+            const content = document.getElementById('agentDetailContent');
+            
+            content.innerHTML = `
+                <h2 class="text-2xl font-bold mb-4">${details.emoji || '🤖'} ${details.name || details.id}</h2>
+                <div class="space-y-4">
+                    <div>
+                        <p class="text-slate-400 text-sm">ID</p>
+                        <p class="terminal-text">${details.id}</p>
+                    </div>
+                    <div>
+                        <p class="text-slate-400 text-sm">Model</p>
+                        <p class="terminal-text">${details.model || 'N/A'}</p>
+                    </div>
+                    <div>
+                        <p class="text-slate-400 text-sm">Status</p>
+                        <p class="terminal-text">${details.status || 'Unknown'}</p>
+                    </div>
+                    ${details.files?.SOUL ? `
+                    <div>
+                        <p class="text-slate-400 text-sm">SOUL.md</p>
+                        <pre class="terminal-text overflow-x-auto text-xs max-h-32">${escapeHtml(details.files.SOUL.slice(0, 300))}</pre>
+                    </div>
+                    ` : ''}
+                    ${details.files?.HEARTBEAT ? `
+                    <div>
+                        <p class="text-slate-400 text-sm">HEARTBEAT.md</p>
+                        <pre class="terminal-text overflow-x-auto text-xs max-h-32">${escapeHtml(details.files.HEARTBEAT.slice(0, 300))}</pre>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+
+            modal.classList.remove('hidden');
+        };
+
+        const deleteAgentHandler = async (agentId) => {
+            if (!confirm('Are you sure you want to delete this agent?')) return;
+
+            try {
+                await api.deleteAgent(agentId);
+                showNotification('Agent deleted successfully', 'success');
+                loadAgents();
+            } catch (err) {
+                showNotification(`Failed to delete agent: ${err.message}`, 'error');
+            }
+        };
+
+        // Data Loading Functions
+        const loadSystemStatus = async () => {
+            const status = await api.getStatus();
+            if (status) {
+                updateSystemStats(status);
+                document.getElementById('apiVersion').textContent = `API: v${status.version || 'Unknown'}`;
+            }
+        };
+
+        const loadAgents = async () => {
+            const agents = await api.getAgents();
+            state.agents = agents;
+
+            // Update dashboard agent cards
+            const dashboardCards = document.getElementById('dashboardAgentCards');
+            if (dashboardCards && document.getElementById('dashboard-tab').classList.contains('hidden') === false) {
+                dashboardCards.innerHTML = '';
+                if (agents.length === 0) {
+                    dashboardCards.innerHTML = '<div class="col-span-full text-center text-slate-400 py-8">No agents created yet</div>';
+                } else {
+                    agents.forEach(agent => {
+                        const smallCard = document.createElement('div');
+                        smallCard.className = 'agent-card bg-slate-800 rounded-lg border border-slate-700 p-4';
+                        smallCard.innerHTML = `
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-2xl">${agent.emoji || '🤖'}</p>
+                                    <h3 class="font-bold">${agent.name || agent.id}</h3>
+                                </div>
+                                <span class="text-xs px-2 py-1 rounded-full ${agent.status === 'active' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}">
+                                    ${agent.status || 'unknown'}
+                                </span>
+                            </div>
+                            <p class="text-sm text-slate-400 mt-2">Messages: ${agent.messageCount || 0}</p>
+                        `;
+                        dashboardCards.appendChild(smallCard);
+                    });
+                }
+            }
+
+            // Update agents list
+            const agentsList = document.getElementById('agentsList');
+            if (agentsList && document.getElementById('agents-tab').classList.contains('hidden') === false) {
+                agentsList.innerHTML = '';
+                if (agents.length === 0) {
+                    agentsList.innerHTML = '<div class="col-span-full text-center text-slate-400 py-8">No agents created yet. Create one to get started!</div>';
+                } else {
+                    agents.forEach(agent => {
+                        agentsList.appendChild(createAgentCard(agent));
+                    });
+                }
+            }
+
+            // Update stats
+            document.getElementById('statsActiveAgents').textContent = agents.filter(a => a.status === 'active').length;
+            const totalChannels = agents.reduce((sum, a) => sum + (a.channels?.length || 0), 0);
+            document.getElementById('statsTotalChannels').textContent = totalChannels;
+        };
+
+        const loadChatAgents = async () => {
+            const agents = await api.getAgents();
+            const select = document.getElementById('chatAgentSelect');
+            
+            select.innerHTML = '<option value="">Choose an agent...</option>';
+            agents.forEach(agent => {
+                const option = document.createElement('option');
+                option.value = agent.id;
+                option.textContent = `${agent.emoji || '🤖'} ${agent.name || agent.id}`;
+                select.appendChild(option);
+            });
+        };
+
+        const loadHeartbeatData = async () => {
+            const data = await api.getHeartbeat();
+            const list = document.getElementById('heartbeatList');
+            
+            if (!data.tasks || data.tasks.length === 0) {
+                list.innerHTML = '<div class="bg-slate-800 rounded-lg border border-slate-700 p-6 text-center text-slate-400">No heartbeat tasks configured</div>';
+                return;
+            }
+
+            list.innerHTML = '';
+            data.tasks.forEach(task => {
+                const card = document.createElement('div');
+                card.className = 'bg-slate-800 rounded-lg border border-slate-700 p-4';
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="font-bold">${task.name || 'Unknown'}</h3>
+                        <span class="text-xs px-2 py-1 rounded-full ${
+                            task.status === 'running' ? 'bg-yellow-900 text-yellow-300' :
+                            task.status === 'idle' ? 'bg-violet-900 text-violet-300' :
+                            'bg-red-900 text-red-300'
+                        }">
+                            ${task.status || 'unknown'}
+                        </span>
+                    </div>
+                    <p class="text-sm text-slate-400">${task.description || 'No description'}</p>
+                    ${task.lastRun ? `<p class="text-xs text-slate-500 mt-2">Last run: ${new Date(task.lastRun).toLocaleString()}</p>` : ''}
+                `;
+                list.appendChild(card);
+            });
+        };
+
+        const loadSettings = async () => {
+            const config = await api.getConfig();
+            
+            const configDisplay = document.getElementById('configDisplay');
+            if (config) {
+                configDisplay.innerHTML = `
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-slate-400 text-sm">Gateway Port</p>
+                            <p class="terminal-text">${config.port || '4848'}</p>
+                        </div>
+                        <div>
+                            <p class="text-slate-400 text-sm">Environment</p>
+                            <p class="terminal-text">${config.environment || 'production'}</p>
+                        </div>
+                        <div>
+                            <p class="text-slate-400 text-sm">Debug Mode</p>
+                            <p class="terminal-text">${config.debug ? 'Enabled' : 'Disabled'}</p>
+                        </div>
+                        <div>
+                            <p class="text-slate-400 text-sm">Max Agents</p>
+                            <p class="terminal-text">${config.maxAgents || 'Unlimited'}</p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                configDisplay.innerHTML = '<p class="text-slate-400">Failed to load configuration</p>';
+            }
+
+            const providersDisplay = document.getElementById('providersDisplay');
+            if (config?.providers) {
+                let html = '';
+                for (const [provider, settings] of Object.entries(config.providers)) {
+                    html += `
+                        <div class="border-t border-slate-700 pt-3">
+                            <p class="font-semibold capitalize">${provider}</p>
+                            <p class="text-sm text-slate-400">API Key: ${settings.apiKey ? '****' : 'Not configured'}</p>
+                        </div>
+                    `;
+                }
+                providersDisplay.innerHTML = html || '<p class="text-slate-400">No providers configured</p>';
+            }
+        };
+
+        // Event Listeners
+        document.querySelectorAll('[data-tab]').forEach(btn => {
+            btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+        });
+
+        document.getElementById('createAgentBtn').addEventListener('click', () => {
+            document.getElementById('createAgentModal').classList.remove('hidden');
+        });
+
+        document.getElementById('closeModalBtn').addEventListener('click', () => {
+            document.getElementById('createAgentModal').classList.add('hidden');
+            document.getElementById('createAgentForm').reset();
+        });
+
+        document.getElementById('closeDetailModal').addEventListener('click', () => {
+            document.getElementById('agentDetailModal').classList.add('hidden');
+        });
+
+        document.getElementById('createAgentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const agentData = {
+                id: document.getElementById('agentId').value,
+                name: document.getElementById('agentName').value,
+                emoji: document.getElementById('agentEmoji').value,
+                model: document.getElementById('agentModel').value
+            };
+
+            try {
+                await api.createAgent(agentData);
+                showNotification('Agent created successfully!', 'success');
+                document.getElementById('createAgentModal').classList.add('hidden');
+                document.getElementById('createAgentForm').reset();
+                loadAgents();
+                addActivityLog(`Created agent: ${agentData.name}`, 'success');
+            } catch (err) {
+                showNotification(`Failed to create agent: ${err.message}`, 'error');
+            }
+        });
+
+        const chatAgentSelect = document.getElementById('chatAgentSelect');
+        chatAgentSelect.addEventListener('change', async (e) => {
+            if (!e.target.value) {
+                state.selectedAgent = null;
+                document.getElementById('selectedAgentInfo').classList.add('hidden');
+                document.getElementById('chatMessages').innerHTML = '<p class="text-slate-400 text-sm">Select an agent to start chatting</p>';
+                document.getElementById('chatInput').disabled = true;
+                document.getElementById('chatSendBtn').disabled = true;
+                return;
+            }
+
+            const agent = state.agents.find(a => a.id === e.target.value);
+            state.selectedAgent = agent;
+            state.chatMessages = [];
+
+            const infoEl = document.getElementById('selectedAgentInfo');
+            const displayEl = document.getElementById('agentDetailDisplay');
+            
+            displayEl.innerHTML = `
+                <p><span class="text-slate-400">Name:</span> ${agent.name}</p>
+                <p><span class="text-slate-400">Model:</span> ${agent.model}</p>
+                <p><span class="text-slate-400">Status:</span> ${agent.status || 'unknown'}</p>
+            `;
+            infoEl.classList.remove('hidden');
+
+            document.getElementById('chatHeader').textContent = `💬 ${agent.emoji || '🤖'} ${agent.name}`;
+            document.getElementById('chatMessages').innerHTML = '<p class="text-slate-400 text-sm">Chat started. Type a message to begin.</p>';
+            document.getElementById('chatInput').disabled = false;
+            document.getElementById('chatSendBtn').disabled = false;
+        });
+
+        document.getElementById('chatSendBtn').addEventListener('click', async () => {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+
+            if (!message || !state.selectedAgent) return;
+
+            addChatMessage('You', message, 'sent');
+            input.value = '';
+
+            try {
+                const response = await api.sendMessage(state.selectedAgent.id, message);
+                if (response.reply) {
+                    addChatMessage(state.selectedAgent.name, response.reply, 'received');
+                }
+            } catch (err) {
+                addChatMessage('System', `Error: ${err.message}`, 'error');
+            }
+        });
+
+        document.getElementById('chatInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('chatSendBtn').click();
+            }
+        });
+
+        document.getElementById('runHeartbeatBtn').addEventListener('click', async () => {
+            try {
+                const result = await api.runHeartbeat();
+                showNotification('Heartbeat executed successfully!', 'success');
+                addActivityLog('Heartbeat executed', 'success');
+                loadHeartbeatData();
+            } catch (err) {
+                showNotification(`Failed to run heartbeat: ${err.message}`, 'error');
+            }
+        });
+
+        // Modal overlay close
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', function() {
+                this.parentElement.classList.add('hidden');
+            });
+        });
+
+        // Initial Load
+        const init = async () => {
+            log('Initializing NexusMind Dashboard...', 'info');
+            
+            // Try to connect to API
+            await loadSystemStatus();
+            await loadAgents();
+            
+            // Initialize WebSocket
+            initWebSocket();
+            
+            // Update status periodically
+            setInterval(loadSystemStatus, 10000);
+            
+            // Update uptime
+            let startTime = Date.now();
+            setInterval(() => {
+                const elapsed = Date.now() - startTime;
+                state.systemStats.uptime = elapsed;
+                document.getElementById('sysUptime').textContent = formatTime(elapsed);
+            }, 1000);
+            
+            log('Dashboard initialized', 'success');
+            addActivityLog('Dashboard initialized', 'success');
+        };
+
+        init();
+    </script>
+</body>
+</html>

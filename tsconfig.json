@@ -6,26 +6,14 @@
     "lib": ["ES2022"],
     "outDir": "./dist",
     "rootDir": "./src",
-    "strict": false,
-    "noImplicitAny": false,
+    "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "noEmitOnError": false,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"],
-      "@gateway/*": ["src/gateway/*"],
-      "@core/*": ["src/core/*"],
-      "@memory/*": ["src/memory/*"],
-      "@skills/*": ["src/skills/*"],
-      "@types/*": ["src/types/*"]
-    }
+    "sourceMap": true
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "dashboard", "cli", "sdk", "tests"]
+  "exclude": ["node_modules", "dist"]
 }
