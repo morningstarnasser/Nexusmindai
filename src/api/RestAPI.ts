@@ -133,21 +133,136 @@ export class RestAPI {
       });
     });
 
-    // Root endpoint
+    // Root endpoint — Landing Page
     this.app.get('/', (req: Request, res: Response) => {
-      res.json({
-        name: 'NexusMind API',
-        version: '1.0.0',
-        status: 'running',
-        endpoints: {
-          agents: '/api/agents',
-          workflows: '/api/workflows',
-          skills: '/api/skills',
-          memory: '/api/memory',
-          heartbeat: '/api/heartbeat',
-          system: '/api/system',
-        },
-      });
+      const uptime = process.uptime();
+      const hours = Math.floor(uptime / 3600);
+      const minutes = Math.floor((uptime % 3600) / 60);
+      const uptimeStr = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+      const mem = process.memoryUsage();
+      const memMB = (mem.rss / 1024 / 1024).toFixed(1);
+
+      res.setHeader('Content-Type', 'text/html');
+      res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexusMind AI Platform</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0a0a0f;color:#e2e8f0;min-height:100vh;overflow-x:hidden}
+    .bg{position:fixed;inset:0;z-index:0}
+    .bg::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 30% 20%,rgba(99,102,241,.15) 0%,transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(139,92,246,.1) 0%,transparent 50%);animation:drift 20s ease-in-out infinite}
+    @keyframes drift{0%,100%{transform:translate(0,0)}50%{transform:translate(-2%,2%)}}
+    .grid-bg{position:fixed;inset:0;background-image:linear-gradient(rgba(99,102,241,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,.03) 1px,transparent 1px);background-size:60px 60px;z-index:0}
+    .container{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:40px 24px;min-height:100vh;display:flex;flex-direction:column;justify-content:center}
+    .hero{text-align:center;margin-bottom:48px}
+    .logo{font-size:64px;margin-bottom:16px;filter:drop-shadow(0 0 30px rgba(99,102,241,.4))}
+    h1{font-size:clamp(2rem,5vw,3.5rem);font-weight:800;background:linear-gradient(135deg,#818cf8,#a78bfa,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-0.02em;margin-bottom:8px}
+    .tagline{color:#94a3b8;font-size:1.1rem;max-width:500px;margin:0 auto;line-height:1.6}
+    .status-bar{display:flex;justify-content:center;gap:24px;margin:32px 0;flex-wrap:wrap}
+    .status-item{display:flex;align-items:center;gap:8px;padding:8px 16px;background:rgba(30,30,46,.6);border:1px solid rgba(99,102,241,.15);border-radius:999px;font-size:.85rem}
+    .dot{width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 8px rgba(34,197,94,.5);animation:pulse 2s ease-in-out infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+    .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;margin-bottom:48px}
+    .card{background:rgba(30,30,46,.5);border:1px solid rgba(99,102,241,.1);border-radius:16px;padding:24px;transition:all .3s;backdrop-filter:blur(10px)}
+    .card:hover{border-color:rgba(99,102,241,.3);transform:translateY(-2px);box-shadow:0 8px 32px rgba(99,102,241,.1)}
+    .card-icon{font-size:28px;margin-bottom:12px}
+    .card h3{font-size:1rem;font-weight:600;margin-bottom:4px;color:#c7d2fe}
+    .card p{font-size:.8rem;color:#64748b;line-height:1.5}
+    .card code{font-size:.75rem;color:#818cf8;background:rgba(99,102,241,.1);padding:2px 8px;border-radius:4px;display:inline-block;margin-top:8px}
+    .metrics{display:flex;justify-content:center;gap:32px;margin-bottom:48px;flex-wrap:wrap}
+    .metric{text-align:center}
+    .metric-value{font-size:1.5rem;font-weight:700;color:#a78bfa}
+    .metric-label{font-size:.75rem;color:#64748b;margin-top:2px}
+    .links{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 24px;border-radius:10px;font-size:.9rem;font-weight:500;text-decoration:none;transition:all .2s}
+    .btn-primary{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;box-shadow:0 4px 16px rgba(99,102,241,.3)}
+    .btn-primary:hover{box-shadow:0 6px 24px rgba(99,102,241,.5);transform:translateY(-1px)}
+    .btn-ghost{border:1px solid rgba(99,102,241,.2);color:#a5b4fc;background:transparent}
+    .btn-ghost:hover{background:rgba(99,102,241,.1);border-color:rgba(99,102,241,.4)}
+    footer{text-align:center;padding:24px 0;color:#475569;font-size:.75rem;border-top:1px solid rgba(99,102,241,.08)}
+    footer a{color:#818cf8;text-decoration:none}
+    @media(max-width:600px){.status-bar{gap:12px}.metrics{gap:20px}.cards{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="bg"></div>
+  <div class="grid-bg"></div>
+  <div class="container">
+    <div class="hero">
+      <div class="logo">🧠</div>
+      <h1>NexusMind</h1>
+      <p class="tagline">Autonomous AI Agent Orchestration Platform — deploy intelligent agents across 12+ messaging platforms from a single unified system.</p>
+    </div>
+
+    <div class="status-bar">
+      <div class="status-item"><span class="dot"></span> System Online</div>
+      <div class="status-item">⏱ Uptime: ${uptimeStr}</div>
+      <div class="status-item">💾 Memory: ${memMB} MB</div>
+      <div class="status-item">📡 v1.0.0</div>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <div class="card-icon">🤖</div>
+        <h3>Agents</h3>
+        <p>Create, deploy and manage AI agents across platforms</p>
+        <code>GET /api/agents</code>
+      </div>
+      <div class="card">
+        <div class="card-icon">⚡</div>
+        <h3>Workflows</h3>
+        <p>Orchestrate multi-step agent workflows</p>
+        <code>GET /api/workflows</code>
+      </div>
+      <div class="card">
+        <div class="card-icon">🧩</div>
+        <h3>Skills</h3>
+        <p>Install and manage modular agent capabilities</p>
+        <code>GET /api/skills</code>
+      </div>
+      <div class="card">
+        <div class="card-icon">🧠</div>
+        <h3>Memory</h3>
+        <p>Tiered memory with semantic search</p>
+        <code>GET /api/memory/stats</code>
+      </div>
+      <div class="card">
+        <div class="card-icon">💓</div>
+        <h3>Heartbeat</h3>
+        <p>Autonomous task scheduling engine</p>
+        <code>GET /api/heartbeat</code>
+      </div>
+      <div class="card">
+        <div class="card-icon">📊</div>
+        <h3>System</h3>
+        <p>Health monitoring, metrics and backups</p>
+        <code>GET /api/system/health</code>
+      </div>
+    </div>
+
+    <div class="metrics">
+      <div class="metric"><div class="metric-value">12+</div><div class="metric-label">Platforms</div></div>
+      <div class="metric"><div class="metric-value">6</div><div class="metric-label">API Modules</div></div>
+      <div class="metric"><div class="metric-value">AES-256</div><div class="metric-label">Encryption</div></div>
+      <div class="metric"><div class="metric-value">WS</div><div class="metric-label">Real-Time</div></div>
+    </div>
+
+    <div class="links">
+      <a href="https://github.com/morningstarnasser/Nexusmindai" class="btn btn-primary" target="_blank">⭐ GitHub Repository</a>
+      <a href="/api/system/health" class="btn btn-ghost">Health Check</a>
+      <a href="/health" class="btn btn-ghost">API Status</a>
+    </div>
+  </div>
+
+  <footer>
+    <p>Built with TypeScript, Express & Next.js &mdash; <a href="https://github.com/morningstarnasser/Nexusmindai" target="_blank">NexusMind</a> &copy; 2026</p>
+  </footer>
+</body>
+</html>`);
     });
 
     // API routes
