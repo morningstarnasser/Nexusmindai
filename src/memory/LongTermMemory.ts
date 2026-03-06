@@ -19,7 +19,7 @@ interface EmbeddedEntry {
  */
 export class LongTermMemory {
   private logger: Logger;
-  private store: Map<string, EmbeddedEntry> = new Map();
+  private _store: Map<string, EmbeddedEntry> = new Map();
   private embeddingDimension: number = 768;
 
   constructor() {
@@ -46,7 +46,7 @@ export class LongTermMemory {
         normalized: false,
       };
 
-      this.store.set(entry.id, embedded);
+      this._store.set(entry.id, embedded);
       this.logger.debug(`Stored embedded entry: ${entry.id}`);
     } catch (error) {
       this.logger.error('Error storing in long-term memory', error);
@@ -59,7 +59,7 @@ export class LongTermMemory {
    */
   async retrieve(entryId: string): Promise<IMemoryEntry | null> {
     try {
-      const embedded = this.store.get(entryId);
+      const embedded = this._store.get(entryId);
       return embedded?.entry || null;
     } catch (error) {
       this.logger.error(`Error retrieving entry ${entryId}`, error);
@@ -75,7 +75,7 @@ export class LongTermMemory {
       const queryEmbedding = await this.generateEmbedding(query);
       const results: Array<{ id: string; score: number; entry: IMemoryEntry }> = [];
 
-      for (const [id, embedded] of this.store.entries()) {
+      for (const [id, embedded] of this._store.entries()) {
         const similarity = this.cosineSimilarity(queryEmbedding, embedded.embedding);
         results.push({
           id,
@@ -92,6 +92,7 @@ export class LongTermMemory {
           entryId: r.id,
           content: r.entry.content,
           relevanceScore: r.score,
+          sources: [] as string[],
           tier: 'long-term',
         }));
     } catch (error) {
@@ -163,14 +164,14 @@ export class LongTermMemory {
    */
   async findSimilar(entryId: string, limit: number = 10): Promise<ISearchResult[]> {
     try {
-      const embedded = this.store.get(entryId);
+      const embedded = this._store.get(entryId);
       if (!embedded) {
         return [];
       }
 
       const results: Array<{ id: string; score: number; entry: IMemoryEntry }> = [];
 
-      for (const [id, other] of this.store.entries()) {
+      for (const [id, other] of this._store.entries()) {
         if (id === entryId) continue;
 
         const similarity = this.cosineSimilarity(embedded.embedding, other.embedding);
@@ -188,6 +189,7 @@ export class LongTermMemory {
           entryId: r.id,
           content: r.entry.content,
           relevanceScore: r.score,
+          sources: [] as string[],
           tier: 'long-term',
         }));
     } catch (error) {
@@ -201,7 +203,7 @@ export class LongTermMemory {
    */
   async delete(entryId: string): Promise<boolean> {
     try {
-      return this.store.delete(entryId);
+      return this._store.delete(entryId);
     } catch (error) {
       this.logger.error(`Error deleting entry ${entryId}`, error);
       throw error;
@@ -212,7 +214,7 @@ export class LongTermMemory {
    * Get all entries
    */
   async getAll(): Promise<IMemoryEntry[]> {
-    return Array.from(this.store.values()).map(e => e.entry);
+    return Array.from(this._store.values()).map(e => e.entry);
   }
 
   /**
@@ -223,7 +225,7 @@ export class LongTermMemory {
     embeddingSize: number;
     storeSizeBytes: number;
   } {
-    const entries = Array.from(this.store.values());
+    const entries = Array.from(this._store.values());
     const embeddingSize = this.embeddingDimension;
     const bytesPerEmbedding = embeddingSize * 8; // 8 bytes per float
     const storeSizeBytes = entries.length * bytesPerEmbedding;
@@ -239,7 +241,7 @@ export class LongTermMemory {
    * Clear all entries
    */
   async clear(): Promise<void> {
-    this.store.clear();
+    this._store.clear();
     this.logger.info('Cleared long-term memory');
   }
 

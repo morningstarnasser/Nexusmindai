@@ -1,5 +1,5 @@
 import { ProtocolAdapter } from '../ProtocolAdapter.js';
-import { NexusMessage, AdapterConfig } from '../../types/index.js';
+import { NexusMessage, AdapterConfig, Message } from '../../types/index.js';
 import { logger } from '../../utils/logger.js';
 
 /**
@@ -21,7 +21,7 @@ export class TeamsAdapter extends ProtocolAdapter {
   private port: number;
 
   constructor(config: AdapterConfig) {
-    super(config);
+    super('teams', config as Record<string, unknown>);
     this.botId = config.credentials?.botId || '';
     this.botPassword = config.credentials?.botPassword || '';
     this.port = config.credentials?.port || 3978;
@@ -104,6 +104,37 @@ export class TeamsAdapter extends ProtocolAdapter {
     }
   }
 
+  async send(message: Message): Promise<void> {
+    const channelId = message.channel || '';
+    if (!this.isConnected || !this.adapter) {
+      return;
+    }
+
+    try {
+      await this.applyRateLimit();
+
+      const conversationRef = {
+        channelId: 'msteams',
+        user: { id: channelId, name: 'NexusMind' },
+        conversation: { id: channelId },
+        channelData: { teamsChannelId: channelId },
+      };
+
+      await this.adapter.continueConversationAsync(
+        this.botId,
+        conversationRef,
+        async (context: any) => {
+          await context.sendActivity({ type: 'message', text: message.content });
+        }
+      );
+
+      logger.debug(`Message sent to Teams channel ${channelId}`);
+    } catch (error) {
+      logger.error(`Failed to send message to Teams channel ${channelId}:`, error);
+      throw error;
+    }
+  }
+
   async sendMessage(channelId: string, message: NexusMessage): Promise<void> {
     if (!this.isConnected || !this.adapter) {
       this.messageQueue.set(channelId, [
@@ -119,7 +150,7 @@ export class TeamsAdapter extends ProtocolAdapter {
       const teamsMessage = this.convertToTeamsMessage(message);
 
       // Send proactive message
-      const { ConversationReference } = await import('botbuilder');
+      const botbuilder = await import('botbuilder') as any;
       const conversationRef = {
         channelId: 'msteams',
         user: { id: channelId, name: 'NexusMind' },
@@ -147,9 +178,7 @@ export class TeamsAdapter extends ProtocolAdapter {
       const activity = context.activity;
       const message = this.convertFromTeamsMessage(activity);
 
-      if (this.onMessage) {
-        await this.onMessage(message);
-      }
+      await this.emitMessage(message as any);
     } catch (error) {
       logger.error('Error handling incoming Teams message:', error);
     }
@@ -157,6 +186,8 @@ export class TeamsAdapter extends ProtocolAdapter {
 
   private convertToTeamsMessage(message: NexusMessage): any {
     const { CardFactory } = require('botbuilder');
+    const msg = message as any;
+    const textContent = msg.text || message.content || '';
 
     // Use Adaptive Card for rich formatting
     const card = {
@@ -165,8 +196,8 @@ export class TeamsAdapter extends ProtocolAdapter {
         id: 'NexusMind',
         name: 'NexusMind Bot',
       },
-      text: message.text,
-      attachments: [],
+      text: textContent,
+      attachments: [] as any[],
     };
 
     // Add rich content if available
@@ -178,7 +209,7 @@ export class TeamsAdapter extends ProtocolAdapter {
         body: [
           {
             type: 'TextBlock',
-            text: message.text,
+            text: textContent,
             wrap: true,
             weight: message.metadata?.bold ? 'bolder' : 'normal',
             style: message.metadata?.italic ? 'emphasis' : undefined,
@@ -189,8 +220,9 @@ export class TeamsAdapter extends ProtocolAdapter {
       card.attachments.push(CardFactory.adaptiveCard(adaptiveCard));
     }
 
-    if (message.media && message.media.length > 0) {
-      for (const media of message.media) {
+    const mediaList = msg.media || message.attachments;
+    if (mediaList && mediaList.length > 0) {
+      for (const media of mediaList) {
         card.attachments.push({
           contentType: media.mimeType || 'application/octet-stream',
           contentUrl: media.url,
@@ -205,28 +237,41 @@ export class TeamsAdapter extends ProtocolAdapter {
   private convertFromTeamsMessage(activity: any): NexusMessage {
     return {
       id: activity.id,
-      platform: 'teams',
-      channelId: activity.channelData?.teamsChannelId || activity.conversation?.id || activity.from?.id,
-      sender: {
+      platform: 'teams' as any,
+      channel: { id: activity.channelData?.teamsChannelId || activity.conversation?.id || activity.from?.id, name: '', type: 'text', isPrivate: false } as any,
+      author: {
         id: activity.from?.id,
         username: activity.from?.name || 'Unknown',
         displayName: activity.from?.name || 'Unknown',
+        roles: [],
+        permissions: [],
+        isBot: false,
+        isModerator: false,
       },
-      text: activity.text || '',
-      timestamp: activity.timestamp ? new Date(activity.timestamp) : new Date(),
-      media: activity.attachments
+      content: activity.text || '',
+      contentType: 'text' as any,
+      attachments: activity.attachments
         ? activity.attachments.map((att: any) => ({
+            id: '',
             url: att.contentUrl,
             type: this.parseContentType(att.contentType),
-            name: att.name,
+            filename: att.name || 'attachment',
+            mimeType: att.contentType || 'application/octet-stream',
+            size: 0,
           }))
-        : undefined,
+        : [],
+      embeds: [],
+      components: [],
+      reactions: [],
+      mentions: { users: [], roles: [], channels: [] },
+      processed: false,
+      timestamp: activity.timestamp ? new Date(activity.timestamp) : new Date(),
       metadata: {
         messageType: activity.type,
         isTeamsChannelMessage: !!activity.channelData?.teamsChannelId,
         mentions: activity.entities?.filter((e: any) => e.type === 'mention'),
       },
-    };
+    } as NexusMessage;
   }
 
   private parseContentType(contentType: string): string {

@@ -1,5 +1,5 @@
 import { ProtocolAdapter } from '../ProtocolAdapter.js';
-import { NexusMessage, AdapterConfig } from '../../types/index.js';
+import { NexusMessage, AdapterConfig, Message } from '../../types/index.js';
 import { logger } from '../../utils/logger.js';
 
 /**
@@ -19,7 +19,7 @@ export class MatrixAdapter extends ProtocolAdapter {
   private lastMessageTime = 0;
 
   constructor(config: AdapterConfig) {
-    super(config);
+    super('matrix', config as Record<string, unknown>);
     this.homeserverUrl = config.credentials?.homeserverUrl || 'https://matrix.org';
     this.userId = config.credentials?.userId || '';
     this.password = config.credentials?.password || '';
@@ -84,6 +84,27 @@ export class MatrixAdapter extends ProtocolAdapter {
     }
   }
 
+  async send(message: Message): Promise<void> {
+    const channelId = message.channel || '';
+    if (!this.isConnected || !this.client) {
+      return;
+    }
+
+    try {
+      await this.applyRateLimit();
+
+      await this.client.sendMessage(channelId, {
+        msgtype: 'm.text',
+        body: message.content,
+      });
+
+      logger.debug(`Message sent to Matrix room ${channelId}`);
+    } catch (error) {
+      logger.error(`Failed to send message to Matrix room ${channelId}:`, error);
+      throw error;
+    }
+  }
+
   async sendMessage(channelId: string, message: NexusMessage): Promise<void> {
     if (!this.isConnected || !this.client) {
       this.messageQueue.set(channelId, [
@@ -102,10 +123,12 @@ export class MatrixAdapter extends ProtocolAdapter {
       }
 
       const matrixMessage = this.convertToMatrixMessage(message);
+      const msg = message as any;
+      const mediaList = msg.media || message.attachments;
 
-      if (message.media && message.media.length > 0) {
-        for (const media of message.media) {
-          await this.sendMediaMessage(channelId, media, message.text);
+      if (mediaList && mediaList.length > 0) {
+        for (const media of mediaList) {
+          await this.sendMediaMessage(channelId, media, msg.text || message.content);
         }
       } else {
         await this.client.sendMessage(channelId, matrixMessage);
@@ -125,17 +148,16 @@ export class MatrixAdapter extends ProtocolAdapter {
       if (event.getSender() === this.client.getUserId()) return; // Ignore own messages
 
       const message = this.convertFromMatrixMessage(event);
-      
-      if (this.onMessage) {
-        await this.onMessage(message);
-      }
+
+      await this.emitMessage(message as any);
     } catch (error) {
       logger.error('Error handling incoming Matrix message:', error);
     }
   }
 
   private convertToMatrixMessage(message: NexusMessage): any {
-    let content = message.text || '';
+    const msg = message as any;
+    let content = msg.text || message.content || '';
 
     if (message.metadata?.bold) {
       content = `<b>${content}</b>`;
@@ -151,7 +173,7 @@ export class MatrixAdapter extends ProtocolAdapter {
 
     return {
       msgtype: 'm.text',
-      body: message.text,
+      body: msg.text || message.content || '',
       format: 'org.matrix.custom.html',
       formatted_body: content,
     };
@@ -163,32 +185,44 @@ export class MatrixAdapter extends ProtocolAdapter {
 
     return {
       id: event.getId(),
-      platform: 'matrix',
-      channelId: event.getRoomId(),
-      sender: {
+      platform: 'matrix' as any,
+      channel: { id: event.getRoomId(), name: '', type: 'text', isPrivate: false } as any,
+      author: {
         id: sender,
         username: sender.split(':')[0].substring(1), // Remove @ and domain
         displayName: event.sender?.displayName || sender,
         avatar: event.sender?.avatarUrl,
+        roles: [],
+        permissions: [],
+        isBot: false,
+        isModerator: false,
       },
-      text: content.body || '',
-      timestamp: new Date(event.getTs()),
-      media: content.url
+      content: content.body || '',
+      contentType: 'text' as any,
+      attachments: content.url
         ? [
             {
+              id: '',
               url: this.client.mxcUrlToHttp(content.url),
               type: content.msgtype === 'm.image' ? 'image' : 'file',
-              name: content.filename,
-              size: content.info?.size,
+              filename: content.filename || 'attachment',
+              mimeType: content.info?.mimetype || 'application/octet-stream',
+              size: content.info?.size || 0,
             },
           ]
-        : undefined,
+        : [],
+      embeds: [],
+      components: [],
+      reactions: [],
+      mentions: { users: [], roles: [], channels: [] },
+      processed: false,
+      timestamp: new Date(event.getTs()),
       metadata: {
         messageType: content.msgtype,
         isEdited: event.isEdited(),
         replyTo: content['m.relates_to']?.['m.in_reply_to'],
       },
-    };
+    } as NexusMessage;
   }
 
   private async sendMediaMessage(

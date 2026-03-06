@@ -42,7 +42,7 @@ export class AuditLogger {
   /**
    * Log an audit event
    */
-  async log(event: Omit<AuditEntry, 'id' | 'result' | 'hash'>): Promise<string> {
+  async log(event: Omit<AuditEntry, 'id' | 'hash'> & { result?: 'success' | 'failure' }): Promise<string> {
     try {
       const entry: AuditEntry = {
         id: `audit-${++this.entryCounter}-${Date.now()}`,

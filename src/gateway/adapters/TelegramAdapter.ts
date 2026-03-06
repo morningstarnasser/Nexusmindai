@@ -1,5 +1,5 @@
 import { ProtocolAdapter } from '../ProtocolAdapter.js';
-import { NexusMessage, AdapterConfig } from '../../types/index.js';
+import { NexusMessage, AdapterConfig, Message } from '../../types/index.js';
 import { logger } from '../../utils/logger.js';
 
 /**
@@ -64,6 +64,25 @@ export class TelegramAdapter extends ProtocolAdapter {
     }
   }
 
+  async send(message: Message): Promise<void> {
+    const channelId = message.channel || '';
+    if (!this.isConnected || !this.bot) {
+      return;
+    }
+
+    try {
+      await this.applyRateLimit();
+      await this.bot.telegram.sendMessage(channelId, message.content, {
+        parse_mode: 'HTML',
+        disable_web_page_preview: true,
+      });
+      logger.debug(`Message sent to Telegram channel ${channelId}`);
+    } catch (error) {
+      logger.error(`Failed to send message to Telegram channel ${channelId}:`, error);
+      throw error;
+    }
+  }
+
   async sendMessage(channelId: string, message: NexusMessage): Promise<void> {
     if (!this.isConnected || !this.bot) {
       this.messageQueue.set(channelId, [
@@ -78,11 +97,12 @@ export class TelegramAdapter extends ProtocolAdapter {
       await this.applyRateLimit();
 
       const telegramMessage = this.convertToTelegramMessage(message);
+      const msg = message as any;
 
-      if (message.media && message.media.length > 0) {
+      if ((msg.media || message.attachments) && (msg.media || message.attachments).length > 0) {
         // Handle media attachments
-        for (const media of message.media) {
-          await this.sendMediaMessage(channelId, media, message.text);
+        for (const media of (msg.media || message.attachments)) {
+          await this.sendMediaMessage(channelId, media, msg.text || message.content);
         }
       } else {
         // Send text message
@@ -102,10 +122,8 @@ export class TelegramAdapter extends ProtocolAdapter {
   private async handleIncomingMessage(ctx: any): Promise<void> {
     try {
       const message = this.convertFromTelegramMessage(ctx.message, ctx.from);
-      
-      if (this.onMessage) {
-        await this.onMessage(message);
-      }
+
+      await this.emitMessage(message as any);
 
       // Acknowledge receipt
       ctx.reply('Message received');
@@ -115,10 +133,11 @@ export class TelegramAdapter extends ProtocolAdapter {
   }
 
   private convertToTelegramMessage(message: NexusMessage): string {
-    let content = message.text || '';
+    const msg = message as any;
+    let content = msg.text || message.content || '';
     
     if (message.metadata?.mentions) {
-      content = message.metadata.mentions.reduce((acc: string, mention: string) => {
+      content = (message.metadata.mentions as any[]).reduce((acc: string, mention: string) => {
         return acc.replace(mention, `<b>${mention}</b>`);
       }, content);
     }
@@ -137,20 +156,31 @@ export class TelegramAdapter extends ProtocolAdapter {
   private convertFromTelegramMessage(telegramMsg: any, sender: any): NexusMessage {
     return {
       id: `telegram-${telegramMsg.message_id}`,
-      platform: 'telegram',
-      channelId: telegramMsg.chat.id.toString(),
-      sender: {
+      platform: 'telegram' as any,
+      channel: { id: telegramMsg.chat.id.toString(), name: '', type: 'text', isPrivate: false } as any,
+      author: {
         id: sender.id.toString(),
         username: sender.username || sender.first_name || 'Unknown',
         displayName: `${sender.first_name} ${sender.last_name || ''}`.trim(),
+        roles: [],
+        permissions: [],
+        isBot: sender.is_bot || false,
+        isModerator: false,
       },
-      text: telegramMsg.text || telegramMsg.caption || '',
+      content: telegramMsg.text || telegramMsg.caption || '',
+      contentType: 'text' as any,
+      attachments: [],
+      embeds: [],
+      components: [],
+      reactions: [],
+      mentions: { users: [], roles: [], channels: [] },
+      processed: false,
       timestamp: new Date(telegramMsg.date * 1000),
       metadata: {
         messageType: telegramMsg.photo ? 'photo' : 'text',
         isBot: sender.is_bot || false,
       },
-    };
+    } as NexusMessage;
   }
 
   private async sendMediaMessage(

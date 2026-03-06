@@ -1,5 +1,5 @@
 import { ProtocolAdapter } from '../ProtocolAdapter.js';
-import { NexusMessage, AdapterConfig } from '../../types/index.js';
+import { NexusMessage, AdapterConfig, Message } from '../../types/index.js';
 import { logger } from '../../utils/logger.js';
 
 /**
@@ -19,7 +19,7 @@ export class WhatsAppAdapter extends ProtocolAdapter {
   private useWhatsAppWeb: boolean;
 
   constructor(config: AdapterConfig) {
-    super(config);
+    super('whatsapp', config as Record<string, unknown>);
     this.apiKey = config.credentials?.apiKey || '';
     this.phoneNumber = config.credentials?.phoneNumber || '';
     this.useWhatsAppWeb = config.credentials?.useWhatsAppWeb !== false;
@@ -105,6 +105,32 @@ export class WhatsAppAdapter extends ProtocolAdapter {
     }
   }
 
+  async send(message: Message): Promise<void> {
+    const channelId = message.channel || message.userId;
+    if (!this.isConnected || !this.client) {
+      return;
+    }
+
+    try {
+      await this.applyRateLimit();
+
+      if (this.useWhatsAppWeb) {
+        await this.client.sendMessage(channelId, message.content);
+      } else {
+        await this.client.messages.create({
+          from: `whatsapp:${this.phoneNumber}`,
+          to: `whatsapp:${channelId}`,
+          body: message.content,
+        });
+      }
+
+      logger.debug(`Message sent to WhatsApp ${channelId}`);
+    } catch (error) {
+      logger.error(`Failed to send message to WhatsApp ${channelId}:`, error);
+      throw error;
+    }
+  }
+
   async sendMessage(channelId: string, message: NexusMessage): Promise<void> {
     if (!this.isConnected || !this.client) {
       this.messageQueue.set(channelId, [
@@ -118,10 +144,12 @@ export class WhatsAppAdapter extends ProtocolAdapter {
       await this.applyRateLimit();
 
       const whatsappMessage = this.convertToWhatsAppMessage(message);
+      const msg = message as any;
+      const mediaList = msg.media || message.attachments;
 
-      if (message.media && message.media.length > 0) {
-        for (const media of message.media) {
-          await this.sendMediaMessage(channelId, media, message.text);
+      if (mediaList && mediaList.length > 0) {
+        for (const media of mediaList) {
+          await this.sendMediaMessage(channelId, media, msg.text || message.content);
         }
       } else {
         if (this.useWhatsAppWeb) {
@@ -146,17 +174,16 @@ export class WhatsAppAdapter extends ProtocolAdapter {
   private async handleIncomingMessage(msg: any): Promise<void> {
     try {
       const message = this.convertFromWhatsAppMessage(msg);
-      
-      if (this.onMessage) {
-        await this.onMessage(message);
-      }
+
+      await this.emitMessage(message as any);
     } catch (error) {
       logger.error('Error handling incoming WhatsApp message:', error);
     }
   }
 
   private convertToWhatsAppMessage(message: NexusMessage): string {
-    let content = message.text || '';
+    const msg = message as any;
+    let content = msg.text || message.content || '';
     
     if (message.metadata?.bold) {
       content = `*${content}*`;
@@ -180,31 +207,44 @@ export class WhatsAppAdapter extends ProtocolAdapter {
   private convertFromWhatsAppMessage(msg: any): NexusMessage {
     return {
       id: msg.id.id || msg.id,
-      platform: 'whatsapp',
-      channelId: msg.from,
-      sender: {
+      platform: 'whatsapp' as any,
+      channel: { id: msg.from, name: '', type: 'text', isPrivate: false } as any,
+      author: {
         id: msg.from,
         username: msg.author?.pushname || 'Unknown',
         displayName: msg.author?.pushname || 'Unknown',
+        roles: [],
+        permissions: [],
+        isBot: false,
+        isModerator: false,
       },
-      text: msg.body,
-      timestamp: new Date(msg.timestamp * 1000),
-      media: msg.hasMedia
+      content: msg.body,
+      contentType: 'text' as any,
+      attachments: msg.hasMedia
         ? [
             {
+              id: '',
               url: msg.mediaUrl || '',
               type: msg.type || 'file',
-              size: msg.mediaData?.filesize,
+              filename: 'attachment',
+              mimeType: 'application/octet-stream',
+              size: msg.mediaData?.filesize || 0,
             },
           ]
-        : undefined,
+        : [],
+      embeds: [],
+      components: [],
+      reactions: [],
+      mentions: { users: [], roles: [], channels: [] },
+      processed: false,
+      timestamp: new Date(msg.timestamp * 1000),
       metadata: {
         messageType: msg.type,
         isGroup: msg.isGroupMsg,
         isForwarded: msg.isForwarded,
         mentions: msg.mentionedIds || [],
       },
-    };
+    } as NexusMessage;
   }
 
   private async sendMediaMessage(

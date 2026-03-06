@@ -1,5 +1,5 @@
 import { ProtocolAdapter } from '../ProtocolAdapter.js';
-import { NexusMessage, AdapterConfig } from '../../types/index.js';
+import { NexusMessage, AdapterConfig, Message } from '../../types/index.js';
 import { logger } from '../../utils/logger.js';
 
 /**
@@ -18,7 +18,7 @@ export class SignalAdapter extends ProtocolAdapter {
   private isInitialized = false;
 
   constructor(config: AdapterConfig) {
-    super(config);
+    super('signal', config as Record<string, unknown>);
     this.phoneNumber = config.credentials?.phoneNumber || '';
     this.signalCliPath = config.credentials?.signalCliPath || 'signal-cli';
 
@@ -65,6 +65,23 @@ export class SignalAdapter extends ProtocolAdapter {
     }
   }
 
+  async send(message: Message): Promise<void> {
+    const channelId = message.channel || message.userId;
+    if (!this.isConnected || !this.isInitialized) {
+      return;
+    }
+
+    try {
+      await this.applyRateLimit();
+      const args = ['-u', this.phoneNumber, 'send', '-m', message.content, channelId];
+      await this.executeSignalCli(args);
+      logger.debug(`Message sent to Signal ${channelId}`);
+    } catch (error) {
+      logger.error(`Failed to send message to Signal ${channelId}:`, error);
+      throw error;
+    }
+  }
+
   async sendMessage(channelId: string, message: NexusMessage): Promise<void> {
     if (!this.isConnected || !this.isInitialized) {
       this.messageQueue.set(channelId, [
@@ -87,8 +104,10 @@ export class SignalAdapter extends ProtocolAdapter {
       ];
 
       // Add attachment for media
-      if (message.media && message.media.length > 0) {
-        for (const media of message.media) {
+      const msg = message as any;
+      const mediaList = msg.media || message.attachments;
+      if (mediaList && mediaList.length > 0) {
+        for (const media of mediaList) {
           args.push('-a', media.url);
         }
       }
@@ -133,7 +152,8 @@ export class SignalAdapter extends ProtocolAdapter {
   }
 
   private convertToSignalMessage(message: NexusMessage): string {
-    let content = message.text || '';
+    const msg = message as any;
+    let content = msg.text || message.content || '';
     
     if (message.metadata?.bold) {
       // Signal supports markdown-style formatting
@@ -154,28 +174,41 @@ export class SignalAdapter extends ProtocolAdapter {
   private convertFromSignalMessage(signalMsg: any): NexusMessage {
     return {
       id: signalMsg.id || `signal-${Date.now()}`,
-      platform: 'signal',
-      channelId: signalMsg.source,
-      sender: {
+      platform: 'signal' as any,
+      channel: { id: signalMsg.source, name: '', type: 'text', isPrivate: false } as any,
+      author: {
         id: signalMsg.source,
         username: signalMsg.source,
         displayName: signalMsg.sourceName || signalMsg.source,
+        roles: [],
+        permissions: [],
+        isBot: false,
+        isModerator: false,
       },
-      text: signalMsg.message || '',
-      timestamp: new Date(signalMsg.timestamp),
-      media: signalMsg.attachments
+      content: signalMsg.message || '',
+      contentType: 'text' as any,
+      attachments: signalMsg.attachments
         ? signalMsg.attachments.map((att: any) => ({
+            id: '',
             url: att.url || att.path,
             type: att.type || 'file',
-            name: att.filename,
+            filename: att.filename || 'attachment',
+            mimeType: 'application/octet-stream',
+            size: 0,
           }))
-        : undefined,
+        : [],
+      embeds: [],
+      components: [],
+      reactions: [],
+      mentions: { users: [], roles: [], channels: [] },
+      processed: false,
+      timestamp: new Date(signalMsg.timestamp),
       metadata: {
         messageType: 'message',
         isGroupMessage: signalMsg.isGroupMessage || false,
         groupId: signalMsg.groupId,
       },
-    };
+    } as NexusMessage;
   }
 
   private async applyRateLimit(): Promise<void> {

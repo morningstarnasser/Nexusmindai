@@ -1,5 +1,5 @@
 import { ProtocolAdapter } from '../ProtocolAdapter.js';
-import { NexusMessage, AdapterConfig } from '../../types/index.js';
+import { NexusMessage, AdapterConfig, Message } from '../../types/index.js';
 import { logger } from '../../utils/logger.js';
 
 /**
@@ -20,7 +20,7 @@ export class IRCAdapter extends ProtocolAdapter {
   private lastMessageTime = 0;
 
   constructor(config: AdapterConfig) {
-    super(config);
+    super('irc', config as Record<string, unknown>);
     this.host = config.credentials?.host || 'irc.libera.chat';
     this.nick = config.credentials?.nick || 'NexusBot';
     this.port = config.credentials?.port || 6667;
@@ -105,6 +105,23 @@ export class IRCAdapter extends ProtocolAdapter {
     }
   }
 
+  async send(message: Message): Promise<void> {
+    const channelId = message.channel || '';
+    if (!this.isConnected || !this.client) {
+      return;
+    }
+
+    try {
+      await this.applyRateLimit();
+      const target = channelId.startsWith('#') ? channelId : `#${channelId}`;
+      this.client.say(target, message.content);
+      logger.debug(`Message sent to IRC ${target}`);
+    } catch (error) {
+      logger.error(`Failed to send message to IRC ${channelId}:`, error);
+      throw error;
+    }
+  }
+
   async sendMessage(channelId: string, message: NexusMessage): Promise<void> {
     if (!this.isConnected || !this.client) {
       this.messageQueue.set(channelId, [
@@ -141,17 +158,16 @@ export class IRCAdapter extends ProtocolAdapter {
       if (from === this.nick) return;
 
       const message = this.convertFromIrcMessage(from, to, text, isPm);
-      
-      if (this.onMessage) {
-        await this.onMessage(message);
-      }
+
+      await this.emitMessage(message as any);
     } catch (error) {
       logger.error('Error handling incoming IRC message:', error);
     }
   }
 
   private convertToIrcMessage(message: NexusMessage): string {
-    let content = message.text || '';
+    const msg = message as any;
+    let content = msg.text || message.content || '';
 
     // IRC formatting codes
     if (message.metadata?.bold) {
@@ -167,7 +183,7 @@ export class IRCAdapter extends ProtocolAdapter {
     }
 
     if (message.metadata?.color) {
-      const colorCode = this.getIrcColorCode(message.metadata.color);
+      const colorCode = this.getIrcColorCode(message.metadata.color as string);
       content = `\u0003${colorCode}${content}\u0003`;
     }
 
@@ -230,21 +246,32 @@ export class IRCAdapter extends ProtocolAdapter {
 
     return {
       id: `irc-${Date.now()}-${Math.random()}`,
-      platform: 'irc',
-      channelId: isPm ? from : to,
-      sender: {
+      platform: 'irc' as any,
+      channel: { id: isPm ? from : to, name: '', type: isPm ? 'dm' : 'text', isPrivate: isPm } as any,
+      author: {
         id: from,
         username: from,
         displayName: from,
+        roles: [],
+        permissions: [],
+        isBot: false,
+        isModerator: false,
       },
-      text: cleanText,
+      content: cleanText,
+      contentType: 'text' as any,
+      attachments: [],
+      embeds: [],
+      components: [],
+      reactions: [],
+      mentions: { users: [], roles: [], channels: [] },
+      processed: false,
       timestamp: new Date(),
       metadata: {
         messageType: isPm ? 'private' : 'channel',
         isPrivate: isPm,
         ...metadata,
       },
-    };
+    } as NexusMessage;
   }
 
   private async applyRateLimit(): Promise<void> {

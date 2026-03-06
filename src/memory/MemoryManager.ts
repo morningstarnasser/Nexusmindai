@@ -200,7 +200,7 @@ export class MemoryManager extends EventEmitter {
         const existing = results.get(result.entryId);
         if (existing) {
           existing.relevanceScore = Math.max(existing.relevanceScore, result.relevanceScore);
-          existing.sources = [...new Set([...existing.sources, 'long-term'])];
+          existing.sources = [...new Set([...(existing.sources || []), 'long-term'])];
         } else {
           results.set(result.entryId, {
             ...result,

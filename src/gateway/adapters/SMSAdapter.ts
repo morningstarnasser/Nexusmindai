@@ -1,5 +1,5 @@
 import { ProtocolAdapter } from '../ProtocolAdapter.js';
-import { NexusMessage, AdapterConfig } from '../../types/index.js';
+import { NexusMessage, AdapterConfig, Message } from '../../types/index.js';
 import { logger } from '../../utils/logger.js';
 
 /**
@@ -18,7 +18,7 @@ export class SMSAdapter extends ProtocolAdapter {
   private lastMessageTime = 0;
 
   constructor(config: AdapterConfig) {
-    super(config);
+    super('sms', config as Record<string, unknown>);
     this.provider = config.credentials?.provider || 'twilio';
     this.fromNumber = config.credentials?.fromNumber || '';
 
@@ -50,8 +50,8 @@ export class SMSAdapter extends ProtocolAdapter {
   private async connectTwilio(): Promise<void> {
     try {
       const twilio = await import('twilio');
-      const accountSid = this.config.credentials?.accountSid;
-      const authToken = this.config.credentials?.authToken;
+      const accountSid = (this.connectionConfig as any).credentials?.accountSid;
+      const authToken = (this.connectionConfig as any).credentials?.authToken;
 
       if (!accountSid || !authToken) {
         throw new Error('Twilio requires accountSid and authToken');
@@ -70,7 +70,7 @@ export class SMSAdapter extends ProtocolAdapter {
       const { SNSClient } = await import('@aws-sdk/client-sns');
       
       this.client = new SNSClient({
-        region: this.config.credentials?.awsRegion || 'us-east-1',
+        region: (this.connectionConfig as any).credentials?.awsRegion || 'us-east-1',
       });
       logger.info('Connected to AWS SNS service');
     } catch (error) {
@@ -88,6 +88,32 @@ export class SMSAdapter extends ProtocolAdapter {
       this.isConnected = false;
     } catch (error) {
       logger.error('Error disconnecting from SMS:', error);
+    }
+  }
+
+  async send(message: Message): Promise<void> {
+    const phoneNumber = message.channel || message.userId;
+    if (!this.isConnected || !this.client) {
+      return;
+    }
+
+    try {
+      await this.applyRateLimit();
+
+      const smsContent = message.content.length > 160
+        ? message.content.substring(0, 157) + '...'
+        : message.content;
+
+      if (this.provider === 'twilio') {
+        await this.sendViaTwilio(phoneNumber, smsContent);
+      } else if (this.provider === 'aws') {
+        await this.sendViaAWS(phoneNumber, smsContent);
+      }
+
+      logger.debug(`SMS sent to ${phoneNumber}`);
+    } catch (error) {
+      logger.error(`Failed to send SMS to ${phoneNumber}:`, error);
+      throw error;
     }
   }
 
@@ -161,7 +187,8 @@ export class SMSAdapter extends ProtocolAdapter {
   }
 
   private convertToSmsMessage(message: NexusMessage): string {
-    let content = message.text || '';
+    const msg = message as any;
+    let content = msg.text || message.content || '';
 
     // SMS character limit is typically 160 or 320 (for longer messages)
     // Keep it simple - no formatting in SMS
@@ -176,21 +203,32 @@ export class SMSAdapter extends ProtocolAdapter {
   private convertFromSmsMessage(smsData: any): NexusMessage {
     return {
       id: smsData.sid || `sms-${Date.now()}`,
-      platform: 'sms',
-      channelId: smsData.from,
-      sender: {
+      platform: 'sms' as any,
+      channel: { id: smsData.from, name: '', type: 'text', isPrivate: false } as any,
+      author: {
         id: smsData.from,
         username: smsData.from,
         displayName: smsData.from,
+        roles: [],
+        permissions: [],
+        isBot: false,
+        isModerator: false,
       },
-      text: smsData.body || smsData.Message || '',
+      content: smsData.body || smsData.Message || '',
+      contentType: 'text' as any,
+      attachments: [],
+      embeds: [],
+      components: [],
+      reactions: [],
+      mentions: { users: [], roles: [], channels: [] },
+      processed: false,
       timestamp: smsData.dateCreated ? new Date(smsData.dateCreated) : new Date(),
       metadata: {
         messageType: 'sms',
         status: smsData.status,
         numMedia: smsData.numMedia || 0,
       },
-    };
+    } as NexusMessage;
   }
 
   private async applyRateLimit(): Promise<void> {

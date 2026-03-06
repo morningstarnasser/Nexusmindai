@@ -13,6 +13,13 @@ export enum Platform {
   TWITTER = 'twitter',
   WEBHOOK = 'webhook',
   INTERNAL = 'internal',
+  EMAIL = 'email',
+  IRC = 'irc',
+  MATRIX = 'matrix',
+  SMS = 'sms',
+  SIGNAL = 'signal',
+  WHATSAPP = 'whatsapp',
+  TEAMS = 'teams',
 }
 
 /**
@@ -184,6 +191,11 @@ export interface NexusMessage {
 
   // Raw platform data
   rawPayload?: Record<string, unknown>;
+
+  // Compatibility aliases
+  text?: string;
+  media?: MediaAttachment[];
+  sender?: User;
 }
 
 /**

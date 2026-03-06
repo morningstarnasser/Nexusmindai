@@ -116,6 +116,7 @@ export class ShortTermMemory {
             entryId: entry.id,
             content: entry.content,
             relevanceScore,
+            sources: [] as string[],
             tier: 'short-term',
           });
         }

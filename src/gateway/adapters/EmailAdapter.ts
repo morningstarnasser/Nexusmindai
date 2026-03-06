@@ -1,5 +1,5 @@
 import { ProtocolAdapter } from '../ProtocolAdapter.js';
-import { NexusMessage, AdapterConfig } from '../../types/index.js';
+import { NexusMessage, AdapterConfig, Message } from '../../types/index.js';
 import { logger } from '../../utils/logger.js';
 
 /**
@@ -20,7 +20,7 @@ export class EmailAdapter extends ProtocolAdapter {
   private pollInterval: NodeJS.Timeout | null = null;
 
   constructor(config: AdapterConfig) {
-    super(config);
+    super('email', config as Record<string, unknown>);
     this.smtpConfig = config.credentials?.smtp || {};
     this.imapConfig = config.credentials?.imap || {};
 
@@ -104,10 +104,8 @@ export class EmailAdapter extends ProtocolAdapter {
 
       for (const message of messages) {
         const msg = this.convertFromEmailMessage(message);
-        
-        if (this.onMessage) {
-          await this.onMessage(msg);
-        }
+
+        await this.emitMessage(msg as any);
       }
 
       // Mark as read
@@ -144,6 +142,31 @@ export class EmailAdapter extends ProtocolAdapter {
     }
   }
 
+  async send(message: Message): Promise<void> {
+    const recipientEmail = message.channel || message.userId;
+    if (!this.isConnected || !this.transporter) {
+      return;
+    }
+
+    try {
+      await this.applyRateLimit();
+
+      const emailMsg = {
+        from: this.smtpConfig.user,
+        to: recipientEmail,
+        subject: (message.metadata as any)?.subject || 'Message from NexusMind',
+        text: message.content,
+        html: `<p>${message.content}</p>`,
+      };
+
+      const info = await this.transporter.sendMail(emailMsg);
+      logger.debug(`Email sent to ${recipientEmail}, message ID: ${info.messageId}`);
+    } catch (error) {
+      logger.error(`Failed to send email to ${recipientEmail}:`, error);
+      throw error;
+    }
+  }
+
   async sendMessage(channelId: string, message: NexusMessage): Promise<void> {
     if (!this.isConnected || !this.transporter) {
       this.messageQueue.set(channelId, [
@@ -158,9 +181,11 @@ export class EmailAdapter extends ProtocolAdapter {
 
       const emailMessage = this.convertToEmailMessage(channelId, message);
 
-      if (message.media && message.media.length > 0) {
+      const msg = message as any;
+      const mediaList = msg.media || message.attachments;
+      if (mediaList && mediaList.length > 0) {
         emailMessage.attachments = await Promise.all(
-          message.media.map(async (media: any) => {
+          (mediaList as any[]).map(async (media: any) => {
             const response = await fetch(media.url);
             const buffer = await response.arrayBuffer();
             return {
@@ -181,14 +206,16 @@ export class EmailAdapter extends ProtocolAdapter {
   }
 
   private convertToEmailMessage(recipientEmail: string, message: NexusMessage): any {
-    let htmlContent = `<p>${this.escapeHtml(message.text || '')}</p>`;
+    const msg = message as any;
+    const textContent = msg.text || message.content || '';
+    let htmlContent = `<p>${this.escapeHtml(textContent)}</p>`;
 
     if (message.metadata?.senderName) {
-      htmlContent = `<p><strong>From:</strong> ${this.escapeHtml(message.metadata.senderName)}</p>\n${htmlContent}`;
+      htmlContent = `<p><strong>From:</strong> ${this.escapeHtml(message.metadata.senderName as string)}</p>\n${htmlContent}`;
     }
 
     if (message.metadata?.context) {
-      htmlContent += `<p><em>${this.escapeHtml(message.metadata.context)}</em></p>`;
+      htmlContent += `<p><em>${this.escapeHtml(message.metadata.context as string)}</em></p>`;
     }
 
     return {
@@ -196,7 +223,7 @@ export class EmailAdapter extends ProtocolAdapter {
       to: recipientEmail,
       subject: message.metadata?.subject || 'Message from NexusMind',
       html: htmlContent,
-      text: message.text,
+      text: textContent,
       messageId: `<${message.id}@nexusmind.local>`,
       date: message.timestamp || new Date(),
       headers: {
@@ -220,14 +247,25 @@ export class EmailAdapter extends ProtocolAdapter {
 
     return {
       id: emailMsg.id || `email-${Date.now()}`,
-      platform: 'email',
-      channelId: emailMsg.from?.[0] || 'unknown',
-      sender: {
+      platform: 'email' as any,
+      channel: { id: emailMsg.from?.[0] || 'unknown', name: '', type: 'text', isPrivate: false } as any,
+      author: {
         id: emailMsg.from?.[0] || 'unknown',
         username: emailMsg.from?.[0] || 'Unknown',
         displayName: emailMsg.from?.[0] || 'Unknown',
+        roles: [],
+        permissions: [],
+        isBot: false,
+        isModerator: false,
       },
-      text: textContent,
+      content: textContent,
+      contentType: 'text' as any,
+      attachments: [],
+      embeds: [],
+      components: [],
+      reactions: [],
+      mentions: { users: [], roles: [], channels: [] },
+      processed: false,
       timestamp: emailMsg.date || new Date(),
       metadata: {
         subject: emailMsg.subject || '',
@@ -236,7 +274,7 @@ export class EmailAdapter extends ProtocolAdapter {
         cc: emailMsg.cc,
         messageType: 'email',
       },
-    };
+    } as NexusMessage;
   }
 
   private escapeHtml(text: string): string {

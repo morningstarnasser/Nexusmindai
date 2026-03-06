@@ -38,7 +38,7 @@ interface ExecutionContext {
  */
 export class TaskPlanner {
   private logger: Logger;
-  private priorityScores: Map<TaskPriority, number> = new Map([
+  private priorityScores: Map<string, number> = new Map([
     ['minimal', 1],
     ['low', 2],
     ['normal', 3],

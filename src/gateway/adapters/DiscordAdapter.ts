@@ -1,5 +1,5 @@
 import { ProtocolAdapter } from '../ProtocolAdapter.js';
-import { NexusMessage, AdapterConfig } from '../../types/index.js';
+import { NexusMessage, AdapterConfig, Message } from '../../types/index.js';
 import { logger } from '../../utils/logger.js';
 
 /**
@@ -17,7 +17,7 @@ export class DiscordAdapter extends ProtocolAdapter {
   private lastMessageTime = 0;
 
   constructor(config: AdapterConfig) {
-    super(config);
+    super('discord', config as Record<string, unknown>);
     this.discordToken = config.credentials?.token || '';
     if (!this.discordToken) {
       throw new Error('Discord adapter requires token in credentials');
@@ -77,6 +77,28 @@ export class DiscordAdapter extends ProtocolAdapter {
     }
   }
 
+  async send(message: Message): Promise<void> {
+    const channelId = message.channel || '';
+    if (!this.isConnected || !this.client) {
+      return;
+    }
+
+    try {
+      await this.applyRateLimit();
+
+      const channel = await this.client.channels.fetch(channelId);
+      if (!channel) {
+        throw new Error(`Discord channel ${channelId} not found`);
+      }
+
+      await channel.send(message.content);
+      logger.debug(`Message sent to Discord channel ${channelId}`);
+    } catch (error) {
+      logger.error(`Failed to send message to Discord channel ${channelId}:`, error);
+      throw error;
+    }
+  }
+
   async sendMessage(channelId: string, message: NexusMessage): Promise<void> {
     if (!this.isConnected || !this.client) {
       this.messageQueue.set(channelId, [
@@ -95,10 +117,12 @@ export class DiscordAdapter extends ProtocolAdapter {
       }
 
       const discordMessage = this.convertToDiscordMessage(message);
+      const msg = message as any;
+      const mediaList = msg.media || message.attachments;
 
-      if (message.media && message.media.length > 0) {
+      if (mediaList && mediaList.length > 0) {
         const { AttachmentBuilder } = await import('discord.js');
-        const attachments = message.media.map((media: any) => 
+        const attachments = (mediaList as any[]).map((media: any) =>
           new AttachmentBuilder(media.url, { name: media.name || 'attachment' })
         );
         
@@ -123,20 +147,19 @@ export class DiscordAdapter extends ProtocolAdapter {
       if (msg.author.bot) return;
 
       const message = this.convertFromDiscordMessage(msg);
-      
-      if (this.onMessage) {
-        await this.onMessage(message);
-      }
+
+      await this.emitMessage(message as any);
     } catch (error) {
       logger.error('Error handling incoming Discord message:', error);
     }
   }
 
   private convertToDiscordMessage(message: NexusMessage): string {
-    let content = message.text || '';
+    const msg = message as any;
+    let content = msg.text || message.content || '';
     
     if (message.metadata?.mentions) {
-      content = message.metadata.mentions.reduce((acc: string, mention: string) => {
+      content = (message.metadata.mentions as any[]).reduce((acc: string, mention: string) => {
         return acc.replace(mention, `**${mention}**`);
       }, content);
     }
@@ -162,32 +185,44 @@ export class DiscordAdapter extends ProtocolAdapter {
   }
 
   private convertFromDiscordMessage(msg: any): NexusMessage {
-    const media = msg.attachments.map((attachment: any) => ({
+    const mediaAttachments = msg.attachments.map((attachment: any) => ({
+      id: attachment.id || '',
       url: attachment.url,
       type: this.detectMediaType(attachment.contentType),
-      name: attachment.name,
-      size: attachment.size,
+      filename: attachment.name || 'attachment',
+      mimeType: attachment.contentType || 'application/octet-stream',
+      size: attachment.size || 0,
     }));
 
     return {
       id: msg.id,
-      platform: 'discord',
-      channelId: msg.channelId,
-      sender: {
+      platform: 'discord' as any,
+      channel: { id: msg.channelId, name: '', type: 'text', isPrivate: false } as any,
+      author: {
         id: msg.author.id,
         username: msg.author.username,
         displayName: msg.author.displayName || msg.author.username,
         avatar: msg.author.displayAvatarURL(),
+        roles: [],
+        permissions: [],
+        isBot: msg.author.bot || false,
+        isModerator: false,
       },
-      text: msg.content,
+      content: msg.content,
+      contentType: 'text' as any,
+      attachments: mediaAttachments,
+      embeds: [],
+      components: [],
+      reactions: [],
+      mentions: { users: [], roles: [], channels: [] },
+      processed: false,
       timestamp: msg.createdAt,
-      media: media.length > 0 ? media : undefined,
       metadata: {
         messageType: msg.type,
         isReply: msg.reference !== null,
         isPinned: msg.pinned,
       },
-    };
+    } as NexusMessage;
   }
 
   private detectMediaType(contentType: string): string {

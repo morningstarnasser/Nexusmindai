@@ -1,5 +1,5 @@
 import { ProtocolAdapter } from '../ProtocolAdapter.js';
-import { NexusMessage, AdapterConfig } from '../../types/index.js';
+import { NexusMessage, AdapterConfig, Message } from '../../types/index.js';
 import { logger } from '../../utils/logger.js';
 
 /**
@@ -20,7 +20,7 @@ export class WebhookAdapter extends ProtocolAdapter {
   private port: number;
 
   constructor(config: AdapterConfig) {
-    super(config);
+    super('webhook', config as Record<string, unknown>);
     this.webhookUrl = config.credentials?.webhookUrl || '';
     this.callbackUrl = config.credentials?.callbackUrl || '';
     this.apiKey = config.credentials?.apiKey || '';
@@ -58,10 +58,8 @@ export class WebhookAdapter extends ProtocolAdapter {
       app.post('/webhook', async (req: any, res: any) => {
         try {
           const message = this.convertFromWebhookMessage(req.body);
-          
-          if (this.onMessage) {
-            await this.onMessage(message);
-          }
+
+          await this.emitMessage(message as any);
 
           res.json({ status: 'received' });
         } catch (error) {
@@ -125,6 +123,42 @@ export class WebhookAdapter extends ProtocolAdapter {
     }
   }
 
+  async send(message: Message): Promise<void> {
+    const channelId = message.channel || message.userId;
+    if (!this.isConnected || !this.webhookUrl) {
+      return;
+    }
+
+    try {
+      await this.applyRateLimit();
+
+      const response = await fetch(this.webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.apiKey}`,
+          'X-NexusMind-MessageID': message.id,
+          'X-NexusMind-Platform': 'webhook',
+        },
+        body: JSON.stringify({
+          to: channelId,
+          id: message.id,
+          text: message.content,
+          timestamp: message.timestamp,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Webhook request failed: ${response.statusText}`);
+      }
+
+      logger.debug(`Message sent via webhook to ${channelId}`);
+    } catch (error) {
+      logger.error(`Failed to send message via webhook to ${channelId}:`, error);
+      throw error;
+    }
+  }
+
   async sendMessage(channelId: string, message: NexusMessage): Promise<void> {
     if (!this.isConnected || !this.webhookUrl) {
       this.messageQueue.set(channelId, [
@@ -165,15 +199,17 @@ export class WebhookAdapter extends ProtocolAdapter {
   }
 
   private convertToWebhookMessage(message: NexusMessage): any {
+    const msg = message as any;
     const payload: any = {
       id: message.id,
-      text: message.text,
+      text: msg.text || message.content || '',
       timestamp: message.timestamp,
-      sender: message.sender,
+      sender: msg.sender || message.author,
     };
+    const mediaList = msg.media || message.attachments;
 
-    if (message.media && message.media.length > 0) {
-      payload.attachments = message.media.map((media: any) => ({
+    if (mediaList && mediaList.length > 0) {
+      payload.attachments = (mediaList as any[]).map((media: any) => ({
         url: media.url,
         type: media.type,
         name: media.name,
@@ -189,24 +225,40 @@ export class WebhookAdapter extends ProtocolAdapter {
   }
 
   private convertFromWebhookMessage(webhookData: any): NexusMessage {
+    const senderData = webhookData.sender || {
+      id: webhookData.from || 'unknown',
+      username: webhookData.from || 'Unknown',
+      displayName: webhookData.senderName || webhookData.from || 'Unknown',
+    };
+
     return {
       id: webhookData.id || `webhook-${Date.now()}`,
-      platform: webhookData.platform || 'webhook',
-      channelId: webhookData.channelId || webhookData.from || 'unknown',
-      sender: webhookData.sender || {
-        id: webhookData.from || 'unknown',
-        username: webhookData.from || 'Unknown',
-        displayName: webhookData.senderName || webhookData.from || 'Unknown',
+      platform: (webhookData.platform || 'webhook') as any,
+      channel: { id: webhookData.channelId || webhookData.from || 'unknown', name: '', type: 'text', isPrivate: false } as any,
+      author: {
+        id: senderData.id || 'unknown',
+        username: senderData.username || 'Unknown',
+        displayName: senderData.displayName || 'Unknown',
+        roles: [],
+        permissions: [],
+        isBot: false,
+        isModerator: false,
       },
-      text: webhookData.text || webhookData.message || '',
+      content: webhookData.text || webhookData.message || '',
+      contentType: 'text' as any,
+      attachments: webhookData.attachments || webhookData.media || [],
+      embeds: [],
+      components: [],
+      reactions: [],
+      mentions: { users: [], roles: [], channels: [] },
+      processed: false,
       timestamp: webhookData.timestamp ? new Date(webhookData.timestamp) : new Date(),
-      media: webhookData.attachments || webhookData.media,
       metadata: webhookData.metadata || {
         messageType: 'webhook',
         source: webhookData.source,
         customData: webhookData.customData,
       },
-    };
+    } as NexusMessage;
   }
 
   private async applyRateLimit(): Promise<void> {

@@ -23,17 +23,21 @@ export class EventBus extends EventEmitter {
   /**
    * Subscribe to an event (supports wildcards)
    */
-  on(event: string | string[], handler: EventHandler): this {
-    if (Array.isArray(event)) {
-      for (const e of event) {
-        this.registerHandler(e, handler);
-        super.on(e, handler);
-      }
-      return this;
-    } else {
-      this.registerHandler(event, handler);
-      return super.on(event, handler);
+  on(event: string | symbol, handler: EventHandler): this {
+    const eventStr = typeof event === 'symbol' ? event.toString() : event;
+    this.registerHandler(eventStr, handler);
+    return super.on(event, handler);
+  }
+
+  /**
+   * Subscribe to multiple events
+   */
+  onMany(events: string[], handler: EventHandler): this {
+    for (const e of events) {
+      this.registerHandler(e, handler);
+      super.on(e, handler);
     }
+    return this;
   }
 
   /**

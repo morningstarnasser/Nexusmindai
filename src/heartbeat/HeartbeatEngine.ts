@@ -208,7 +208,7 @@ export class HeartbeatEngine extends EventEmitter {
       }
 
       // Execute task
-      await this.executeTask(job, plannedTasks[0]);
+      await this.executeTask(job, (plannedTasks[0] as any).task || plannedTasks[0]);
     } catch (error) {
       this.logger.error(`Error in executeTaskWithLoad for job ${job.id}`, error);
       this.recordExecution(job.id, job.task.id, 'failed', null, 0, error as Error);

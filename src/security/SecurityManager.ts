@@ -407,7 +407,7 @@ export class SecurityManager extends EventEmitter {
    * Export security audit log
    */
   async exportAuditLog(since?: Date): Promise<Record<string, unknown>[]> {
-    return this.auditLogger.export?.(since) || [];
+    return (this.auditLogger.export?.(since) || []) as unknown as Record<string, unknown>[];
   }
 
   /**

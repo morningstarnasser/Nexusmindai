@@ -1,5 +1,5 @@
 import { ProtocolAdapter } from '../ProtocolAdapter.js';
-import { NexusMessage, AdapterConfig } from '../../types/index.js';
+import { NexusMessage, AdapterConfig, Message } from '../../types/index.js';
 import { logger } from '../../utils/logger.js';
 
 /**
@@ -19,10 +19,10 @@ export class SlackAdapter extends ProtocolAdapter {
   private lastMessageTime = 0;
 
   constructor(config: AdapterConfig) {
-    super(config);
+    super('slack', config as Record<string, unknown>);
     this.slackToken = config.credentials?.token || '';
     this.signingSecret = config.credentials?.signingSecret || '';
-    
+
     if (!this.slackToken) {
       throw new Error('Slack adapter requires token in credentials');
     }
@@ -69,6 +69,28 @@ export class SlackAdapter extends ProtocolAdapter {
     }
   }
 
+  async send(message: Message): Promise<void> {
+    const channelId = message.channel || '';
+    if (!this.isConnected || !this.client) {
+      return;
+    }
+
+    try {
+      await this.applyRateLimit();
+
+      await this.client.chat.postMessage({
+        channel: channelId,
+        text: message.content,
+        mrkdwn: true,
+      });
+
+      logger.debug(`Message sent to Slack channel ${channelId}`);
+    } catch (error) {
+      logger.error(`Failed to send message to Slack channel ${channelId}:`, error);
+      throw error;
+    }
+  }
+
   async sendMessage(channelId: string, message: NexusMessage): Promise<void> {
     if (!this.isConnected || !this.client) {
       this.messageQueue.set(channelId, [
@@ -82,9 +104,11 @@ export class SlackAdapter extends ProtocolAdapter {
       await this.applyRateLimit();
 
       const slackMessage = this.convertToSlackMessage(message);
+      const msg = message as any;
+      const mediaList = msg.media || message.attachments;
 
-      if (message.media && message.media.length > 0) {
-        for (const media of message.media) {
+      if (mediaList && mediaList.length > 0) {
+        for (const media of mediaList) {
           await this.uploadMedia(channelId, media);
         }
       }
@@ -107,25 +131,25 @@ export class SlackAdapter extends ProtocolAdapter {
       if (slackMsg.bot_id) return;
 
       const message = this.convertFromSlackMessage(slackMsg);
-      
-      if (this.onMessage) {
-        await this.onMessage(message);
-      }
+
+      await this.emitMessage(message as any);
     } catch (error) {
       logger.error('Error handling incoming Slack message:', error);
     }
   }
 
   private convertToSlackMessage(message: NexusMessage): any {
+    const msg = message as any;
+    const textContent = msg.text || message.content || '';
     const blocks: any[] = [];
 
     // Add text section
-    if (message.text) {
+    if (textContent) {
       blocks.push({
         type: 'section',
         text: {
           type: 'mrkdwn',
-          text: this.formatSlackText(message.text, message.metadata),
+          text: this.formatSlackText(textContent, message.metadata),
         },
       });
     }
@@ -145,7 +169,7 @@ export class SlackAdapter extends ProtocolAdapter {
 
     return {
       blocks,
-      text: message.text,
+      text: textContent,
       mrkdwn: true,
     };
   }
@@ -177,30 +201,42 @@ export class SlackAdapter extends ProtocolAdapter {
   private convertFromSlackMessage(slackMsg: any): NexusMessage {
     return {
       id: slackMsg.ts,
-      platform: 'slack',
-      channelId: slackMsg.channel,
-      sender: {
+      platform: 'slack' as any,
+      channel: { id: slackMsg.channel, name: '', type: 'text', isPrivate: false } as any,
+      author: {
         id: slackMsg.user,
         username: slackMsg.username || slackMsg.user,
         displayName: slackMsg.username || slackMsg.user,
+        roles: [],
+        permissions: [],
+        isBot: false,
+        isModerator: false,
       },
-      text: slackMsg.text || '',
-      timestamp: new Date(parseInt(slackMsg.ts) * 1000),
-      media: slackMsg.files
+      content: slackMsg.text || '',
+      contentType: 'text' as any,
+      attachments: slackMsg.files
         ? slackMsg.files.map((file: any) => ({
+            id: file.id || '',
             url: file.url_private || file.url,
             type: file.mimetype?.split('/')[0] || 'file',
-            name: file.name,
-            size: file.size,
+            filename: file.name || 'attachment',
+            mimeType: file.mimetype || 'application/octet-stream',
+            size: file.size || 0,
           }))
-        : undefined,
+        : [],
+      embeds: [],
+      components: [],
+      reactions: [],
+      mentions: { users: [], roles: [], channels: [] },
+      processed: false,
+      timestamp: new Date(parseInt(slackMsg.ts) * 1000),
       metadata: {
         messageType: slackMsg.subtype || 'message',
         isThreadReply: !!slackMsg.thread_ts,
         threadTs: slackMsg.thread_ts,
         reactions: slackMsg.reactions?.map((r: any) => r.name) || [],
       },
-    };
+    } as NexusMessage;
   }
 
   private async uploadMedia(channelId: string, media: any): Promise<void> {

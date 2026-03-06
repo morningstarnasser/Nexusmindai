@@ -1,4 +1,4 @@
-import { cpuUsage, totalmem, freemem } from 'os';
+import { cpus, totalmem, freemem } from 'os';
 
 interface SystemMetrics {
   cpu_percent: number;

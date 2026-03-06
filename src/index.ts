@@ -61,8 +61,8 @@ export class NexusMind {
     // Initialize Express
     try {
       const expressModule = await import('express');
-      const express = expressModule.default || expressModule;
-      this.expressApp = express();
+      const express = (expressModule.default || expressModule) as any;
+      this.expressApp = express() as Express;
     } catch (error) {
       console.error(
         'Express not installed. Install it with: npm install express @types/express'

@@ -222,6 +222,7 @@ export interface SystemStatus {
 
 // Re-export NexusMessage from message types
 export type { NexusMessage } from './message.js';
+export { Platform, MessageType } from './message.js';
 
 // Adapter Configuration (used by platform adapters)
 export interface AdapterConfig {
@@ -245,7 +246,7 @@ export interface ISearchResult {
   entryId: string;
   content: string;
   relevanceScore: number;
-  sources: string[];
+  sources?: string[];
   tier?: string;
 }
 
@@ -261,6 +262,52 @@ export interface IMemoryStats {
   consolidationHistory: {
     total: number;
     lastConsolidation?: Date;
+  };
+}
+
+// Heartbeat types
+export interface IHeartbeatConfig {
+  interval?: number;
+  timeout?: number;
+  maxRetries?: number;
+  healthCheckInterval?: number;
+  agentConfigs?: any[];
+  [key: string]: unknown;
+}
+
+export interface IHeartbeatType {
+  name: string;
+  interval: number;
+  handler: () => Promise<void>;
+}
+
+export interface IExecutionHistory {
+  id?: string;
+  jobId?: string;
+  taskId: string;
+  status: string;
+  startedAt?: Date;
+  completedAt?: Date;
+  timestamp?: Date;
+  executionTime?: number;
+  error?: string;
+  result?: unknown;
+  [key: string]: unknown;
+}
+
+// ITask extends Task with additional fields used by heartbeat modules
+export interface ITask extends Task {
+  id: string;
+  description?: string;
+  dependencies?: string[];
+  timeout?: number;
+  resourceRequirements?: {
+    memoryMb?: number;
+    computeUnits?: number;
+    tokens?: number;
+    diskMb?: number;
+    exclusive?: boolean;
+    conflictsWith?: string[];
   };
 }
 
