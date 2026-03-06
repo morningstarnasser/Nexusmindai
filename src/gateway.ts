@@ -276,7 +276,7 @@ export class Gateway {
   }
 
   async start(): Promise<void> {
-    const port = config.get<number>('gateway.port') || 4848;
+    const port = Number(process.env.PORT) || config.get<number>('gateway.port') || 4848;
     const host = config.get<string>('gateway.host') || '0.0.0.0';
 
     return new Promise((resolve) => {

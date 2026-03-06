@@ -101,7 +101,7 @@ function makeHttpRequest(
     };
 
     if (body) {
-      options.headers['Content-Length'] = Buffer.byteLength(body);
+      (options.headers as Record<string, string | number>)['Content-Length'] = Buffer.byteLength(body);
     }
 
     const req = http.request(options, (res) => {
@@ -380,8 +380,8 @@ async function setAgentIdentity(agentId: string, name?: string, emoji?: string):
     finalEmoji = finalEmoji || answers.emoji;
   }
 
-  agents[agentId].name = finalName;
-  agents[agentId].emoji = finalEmoji;
+  agents[agentId].name = finalName!;
+  agents[agentId].emoji = finalEmoji!;
   saveAgents(agents);
 
   console.log(chalk.green(`✓ Agent identity updated: ${finalEmoji} ${finalName}`));

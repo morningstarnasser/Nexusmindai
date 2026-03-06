@@ -14,6 +14,15 @@
     "declaration": true,
     "sourceMap": true
   },
-  "include": ["src/**/*"],
+  "include": [
+    "src/index.ts",
+    "src/gateway.ts",
+    "src/agents.ts",
+    "src/config.ts",
+    "src/heartbeat.ts",
+    "src/logger.ts",
+    "src/types.ts",
+    "src/cli/**/*"
+  ],
   "exclude": ["node_modules", "dist"]
 }
