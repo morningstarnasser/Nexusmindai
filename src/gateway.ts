@@ -142,6 +142,11 @@ export class Gateway {
   }
 
   private setupRoutes(): void {
+    // Health check (root level for Railway/deployment)
+    this.app.get('/health', (req, res) => {
+      res.json({ ok: true, uptime: process.uptime() });
+    });
+
     // System
     this.app.get('/api/v1/status', (req, res) => {
       res.json({ ok: true, data: this.getStatus() });
