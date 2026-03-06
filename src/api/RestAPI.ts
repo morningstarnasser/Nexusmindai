@@ -415,7 +415,7 @@ export class RestAPI {
         <div class="install-code">
           <button class="install-copy" onclick="copyCode('oneliner')"><i data-lucide="clipboard"></i> Copy</button>
           <span class="comment"># Works everywhere. Installs everything.</span><br>
-          <span class="cmd">curl</span> -fsSL https://nexusmind.dev/install.sh | bash
+          <span class="cmd">curl</span> -fsSL https://nexusmind-api-production.up.railway.app/install.sh | bash
         </div>
       </div>
     </div>
@@ -684,7 +684,7 @@ export class RestAPI {
         npm: 'npx create-nexusmind@latest my-agents && cd my-agents && npm run dev',
         clone: 'git clone https://github.com/morningstarnasser/Nexusmindai.git && cd Nexusmindai && npm install && npm run build && npm run dev',
         docker: 'docker compose up -d',
-        oneliner: 'curl -fsSL https://nexusmind.dev/install.sh | bash'
+        oneliner: 'curl -fsSL https://nexusmind-api-production.up.railway.app/install.sh | bash'
       };
       navigator.clipboard.writeText(codes[tab] || '');
       const btn = event.target.closest('.install-copy');
