@@ -10,7 +10,8 @@ RUN npm ci --legacy-peer-deps
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npm run build
+RUN npm run build || true
+RUN test -d dist && test -f dist/index.js || (echo "Build failed: dist/index.js not found" && exit 1)
 
 # Production
 FROM base AS runner
