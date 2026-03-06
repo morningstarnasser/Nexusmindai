@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="dashboard/nexo-mascot.svg" alt="NEXO — Nexusmindai Mascot" width="200" height="200">
+  <img src="dashboard/nexo-logo.png" alt="NEXO — Nexusmindai Mascot" width="200" height="200" style="border-radius: 20px;">
 </p>
 
 <h1 align="center">🐙 Nexusmindai</h1>
@@ -287,7 +287,7 @@ All contributions welcome — from bug fixes to new platform adapters to skill p
 ---
 
 <p align="center">
-  <img src="dashboard/nexo-mascot.svg" alt="NEXO" width="60" height="60">
+  <img src="dashboard/nexo-logo.png" alt="NEXO" width="60" height="60" style="border-radius: 12px;">
   <br />
   <sub>🐙 <strong>Nexusmindai</strong> — Your Mind, Amplified. Built by <a href="https://github.com/morningstarnasser">Morningstar</a></sub>
 </p>
