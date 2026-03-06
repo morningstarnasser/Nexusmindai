@@ -305,6 +305,87 @@
             <!-- Settings Tab -->
             <div id="settings-tab" class="tab-content hidden">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- API Keys -->
+                    <div class="lg:col-span-2 bg-slate-800 rounded-lg border border-slate-700 p-6">
+                        <h2 class="text-xl font-bold mb-2">API Keys</h2>
+                        <p class="text-sm text-slate-400 mb-6">Enter your API keys to enable AI model providers. Keys are stored securely on the server.</p>
+                        <form id="apiKeysForm" class="space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <!-- Anthropic -->
+                                <div>
+                                    <label class="block text-sm font-medium mb-2 flex items-center gap-2">
+                                        <span class="w-2 h-2 rounded-full bg-violet-500 inline-block"></span>
+                                        Anthropic (Claude)
+                                    </label>
+                                    <div class="relative">
+                                        <input type="password" id="key-anthropic" placeholder="sk-ant-..." class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white pr-10" data-provider="anthropic">
+                                        <button type="button" class="toggle-key-visibility absolute right-2 top-2 text-slate-400 hover:text-white text-sm">Show</button>
+                                    </div>
+                                </div>
+                                <!-- OpenAI -->
+                                <div>
+                                    <label class="block text-sm font-medium mb-2 flex items-center gap-2">
+                                        <span class="w-2 h-2 rounded-full bg-green-500 inline-block"></span>
+                                        OpenAI (GPT)
+                                    </label>
+                                    <div class="relative">
+                                        <input type="password" id="key-openai" placeholder="sk-..." class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white pr-10" data-provider="openai">
+                                        <button type="button" class="toggle-key-visibility absolute right-2 top-2 text-slate-400 hover:text-white text-sm">Show</button>
+                                    </div>
+                                </div>
+                                <!-- Google -->
+                                <div>
+                                    <label class="block text-sm font-medium mb-2 flex items-center gap-2">
+                                        <span class="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>
+                                        Google (Gemini)
+                                    </label>
+                                    <div class="relative">
+                                        <input type="password" id="key-google" placeholder="AIza..." class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white pr-10" data-provider="google">
+                                        <button type="button" class="toggle-key-visibility absolute right-2 top-2 text-slate-400 hover:text-white text-sm">Show</button>
+                                    </div>
+                                </div>
+                                <!-- Groq -->
+                                <div>
+                                    <label class="block text-sm font-medium mb-2 flex items-center gap-2">
+                                        <span class="w-2 h-2 rounded-full bg-orange-500 inline-block"></span>
+                                        Groq
+                                    </label>
+                                    <div class="relative">
+                                        <input type="password" id="key-groq" placeholder="gsk_..." class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white pr-10" data-provider="groq">
+                                        <button type="button" class="toggle-key-visibility absolute right-2 top-2 text-slate-400 hover:text-white text-sm">Show</button>
+                                    </div>
+                                </div>
+                                <!-- Mistral -->
+                                <div>
+                                    <label class="block text-sm font-medium mb-2 flex items-center gap-2">
+                                        <span class="w-2 h-2 rounded-full bg-cyan-500 inline-block"></span>
+                                        Mistral
+                                    </label>
+                                    <div class="relative">
+                                        <input type="password" id="key-mistral" placeholder="..." class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white pr-10" data-provider="mistral">
+                                        <button type="button" class="toggle-key-visibility absolute right-2 top-2 text-slate-400 hover:text-white text-sm">Show</button>
+                                    </div>
+                                </div>
+                                <!-- Ollama -->
+                                <div>
+                                    <label class="block text-sm font-medium mb-2 flex items-center gap-2">
+                                        <span class="w-2 h-2 rounded-full bg-slate-400 inline-block"></span>
+                                        Ollama (Local URL)
+                                    </label>
+                                    <div class="relative">
+                                        <input type="text" id="key-ollama" placeholder="http://localhost:11434" class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white" data-provider="ollama">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-4 pt-4 border-t border-slate-700">
+                                <button type="submit" class="bg-violet-600 hover:bg-violet-700 text-white font-bold py-2 px-6 rounded-lg">
+                                    Save API Keys
+                                </button>
+                                <span id="apiKeySaveStatus" class="text-sm text-slate-400"></span>
+                            </div>
+                        </form>
+                    </div>
+
                     <!-- Config Settings -->
                     <div class="bg-slate-800 rounded-lg border border-slate-700 p-6">
                         <h2 class="text-xl font-bold mb-4">Gateway Config</h2>
@@ -313,9 +394,9 @@
                         </div>
                     </div>
 
-                    <!-- Model Providers -->
+                    <!-- Model Providers Status -->
                     <div class="bg-slate-800 rounded-lg border border-slate-700 p-6">
-                        <h2 class="text-xl font-bold mb-4">Model Providers</h2>
+                        <h2 class="text-xl font-bold mb-4">Provider Status</h2>
                         <div id="providersDisplay" class="space-y-3">
                             <p class="text-slate-400">Loading providers...</p>
                         </div>
@@ -668,7 +749,7 @@
             if (tabName === 'agents') loadAgents();
             if (tabName === 'chat') loadChatAgents();
             if (tabName === 'heartbeat') loadHeartbeatData();
-            if (tabName === 'settings') loadSettings();
+            if (tabName === 'settings') { loadSettings(); apiKeys.load(); }
         };
 
         const addActivityLog = (message, type = 'info') => {
@@ -967,6 +1048,67 @@
             }
         };
 
+        // API Keys Management
+        const apiKeys = {
+            async load() {
+                try {
+                    const response = await fetch(`${API_BASE}/config/keys`, { signal: AbortSignal.timeout(5000) });
+                    if (!response.ok) return;
+                    const data = await response.json();
+                    if (data.ok && data.data) {
+                        for (const [provider, masked] of Object.entries(data.data)) {
+                            const input = document.getElementById(`key-${provider}`);
+                            if (input && masked) input.placeholder = masked;
+                        }
+                    }
+                } catch (err) {
+                    log('Failed to load API keys', 'error');
+                }
+            },
+            async save() {
+                const keys = {};
+                document.querySelectorAll('#apiKeysForm input[data-provider]').forEach(input => {
+                    if (input.value.trim()) keys[input.dataset.provider] = input.value.trim();
+                });
+                if (Object.keys(keys).length === 0) {
+                    showNotification('No keys to save', 'warning');
+                    return;
+                }
+                try {
+                    const response = await fetch(`${API_BASE}/config/keys`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(keys),
+                        signal: AbortSignal.timeout(5000)
+                    });
+                    if (!response.ok) throw new Error('Failed to save');
+                    showNotification('API keys saved successfully!', 'success');
+                    document.getElementById('apiKeySaveStatus').textContent = 'Saved!';
+                    setTimeout(() => document.getElementById('apiKeySaveStatus').textContent = '', 3000);
+                    // Clear inputs after save, reload placeholders
+                    document.querySelectorAll('#apiKeysForm input[data-provider]').forEach(input => input.value = '');
+                    await apiKeys.load();
+                    addActivityLog('API keys updated', 'success');
+                } catch (err) {
+                    showNotification('Failed to save API keys', 'error');
+                }
+            }
+        };
+
+        // Toggle key visibility
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('toggle-key-visibility')) {
+                const input = e.target.parentElement.querySelector('input');
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    e.target.textContent = 'Hide';
+                } else {
+                    input.type = 'password';
+                    e.target.textContent = 'Show';
+                }
+            }
+        });
+
         // Event Listeners
         document.querySelectorAll('[data-tab]').forEach(btn => {
             btn.addEventListener('click', () => switchTab(btn.dataset.tab));
@@ -1061,6 +1203,11 @@
             if (e.key === 'Enter') {
                 document.getElementById('chatSendBtn').click();
             }
+        });
+
+        document.getElementById('apiKeysForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await apiKeys.save();
         });
 
         document.getElementById('runHeartbeatBtn').addEventListener('click', async () => {

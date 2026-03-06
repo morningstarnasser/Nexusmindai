@@ -225,6 +225,37 @@ export class Gateway {
       res.json({ ok: true, data: cfg });
     });
 
+    // API Keys
+    this.app.get('/api/v1/config/keys', (req, res) => {
+      const keys = config.get<Record<string, string>>('apiKeys') || {};
+      const masked: Record<string, string> = {};
+      for (const [provider, key] of Object.entries(keys)) {
+        if (key && key.length > 8) {
+          masked[provider] = key.slice(0, 4) + '****' + key.slice(-4);
+        } else if (key) {
+          masked[provider] = '****';
+        }
+      }
+      res.json({ ok: true, data: masked });
+    });
+
+    this.app.put('/api/v1/config/keys', (req, res) => {
+      const keys = req.body;
+      if (!keys || typeof keys !== 'object') {
+        res.status(400).json({ ok: false, error: 'Invalid keys' });
+        return;
+      }
+      const existing = config.get<Record<string, string>>('apiKeys') || {};
+      for (const [provider, key] of Object.entries(keys)) {
+        if (typeof key === 'string' && key.trim()) {
+          existing[provider] = key.trim();
+        }
+      }
+      config.set('apiKeys', existing);
+      log.info(`API keys updated for: ${Object.keys(keys).join(', ')}`);
+      res.json({ ok: true, message: 'Keys saved' });
+    });
+
     // Heartbeat
     this.app.get('/api/v1/heartbeat', (req, res) => {
       res.json({ ok: true, data: this.heartbeat.getStatus() });
