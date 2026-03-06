@@ -7,6 +7,11 @@
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      data-clerk-publishable-key="pk_test_ZmFzdC1iYXQtMjQuY2xlcmsuYWNjb3VudHMuZGV2JA"
+      src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
+      crossorigin="anonymous"
+    ></script>
     <style>
         @keyframes pulse-ring {
             0% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.7); }
@@ -102,7 +107,19 @@
     </style>
 </head>
 <body class="bg-slate-900 text-slate-100 font-sans">
-    <div id="app" class="min-h-screen">
+    <!-- Login Screen -->
+    <div id="login-screen" class="min-h-screen flex items-center justify-center">
+        <div class="text-center">
+            <img src="nexo-logo.png" alt="NEXO" width="120" height="120" class="mx-auto mb-6" style="filter: drop-shadow(0 0 20px rgba(124,58,237,0.5));">
+            <h1 class="nexus-logo text-3xl mb-2">Nexusmindai</h1>
+            <p class="text-slate-400 mb-8">Sign in to access the dashboard</p>
+            <div id="clerk-sign-in" class="flex justify-center"></div>
+            <p class="text-slate-500 text-xs mt-6">Powered by Clerk Authentication</p>
+        </div>
+    </div>
+
+    <!-- Dashboard (hidden until authenticated) -->
+    <div id="app" class="min-h-screen hidden">
         <!-- Header -->
         <header class="bg-slate-800 border-b border-slate-700 sticky top-0 z-40">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -117,12 +134,15 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-4">
-                        <div class="text-right">
-                            <div class="flex items-center justify-end gap-2">
-                                <span class="connection-status" id="connectionStatus"></span>
-                                <span class="text-sm" id="connectionText">Connecting...</span>
+                        <div class="flex items-center gap-4">
+                            <div class="text-right">
+                                <div class="flex items-center justify-end gap-2">
+                                    <span class="connection-status" id="connectionStatus"></span>
+                                    <span class="text-sm" id="connectionText">Connecting...</span>
+                                </div>
+                                <p class="text-xs text-slate-400" id="apiVersion">API: Loading...</p>
                             </div>
-                            <p class="text-xs text-slate-400" id="apiVersion">API: Loading...</p>
+                            <div id="clerk-user-button"></div>
                         </div>
                     </div>
                 </div>
@@ -1256,7 +1276,66 @@
             addActivityLog('Dashboard initialized', 'success');
         };
 
-        init();
+        // Clerk Authentication
+        async function initClerk() {
+            try {
+                const clerk = window.Clerk;
+                if (!clerk) {
+                    console.error('Clerk failed to load');
+                    // Fallback: show dashboard without auth
+                    document.getElementById('login-screen').classList.add('hidden');
+                    document.getElementById('app').classList.remove('hidden');
+                    init();
+                    return;
+                }
+
+                await clerk.load();
+
+                if (clerk.user) {
+                    // User is signed in — show dashboard
+                    document.getElementById('login-screen').classList.add('hidden');
+                    document.getElementById('app').classList.remove('hidden');
+                    clerk.mountUserButton(document.getElementById('clerk-user-button'));
+                    init();
+                } else {
+                    // User is not signed in — show login
+                    document.getElementById('login-screen').classList.remove('hidden');
+                    document.getElementById('app').classList.add('hidden');
+                    clerk.mountSignIn(document.getElementById('clerk-sign-in'), {
+                        appearance: {
+                            baseTheme: undefined,
+                            variables: {
+                                colorPrimary: '#7c3aed',
+                                colorBackground: '#1e293b',
+                                colorText: '#f1f5f9',
+                                colorInputBackground: '#334155',
+                                colorInputText: '#f1f5f9',
+                                borderRadius: '0.5rem',
+                            },
+                        },
+                    });
+
+                    // Listen for sign-in
+                    clerk.addListener(({ user }) => {
+                        if (user) {
+                            document.getElementById('login-screen').classList.add('hidden');
+                            document.getElementById('app').classList.remove('hidden');
+                            clerk.unmountSignIn(document.getElementById('clerk-sign-in'));
+                            clerk.mountUserButton(document.getElementById('clerk-user-button'));
+                            init();
+                        }
+                    });
+                }
+            } catch (err) {
+                console.error('Clerk init error:', err);
+                // Fallback: show dashboard without auth
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('app').classList.remove('hidden');
+                init();
+            }
+        }
+
+        initClerk();
     </script>
 </body>
 </html>
