@@ -3,8 +3,8 @@ WORKDIR /app
 
 # Install dependencies
 FROM base AS deps
-COPY package.json package-lock.json* ./
-RUN npm ci --production=false
+COPY package.json package-lock.json* .npmrc* ./
+RUN npm ci --legacy-peer-deps
 
 # Build
 FROM base AS builder
