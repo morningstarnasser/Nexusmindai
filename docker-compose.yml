@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  nexusmind:
+    build: .
+    container_name: nexusmind
+    ports:
+      - "${PORT:-3000}:3000"
+      - "${API_PORT:-3001}:3001"
+      - "${WS_PORT:-3002}:3002"
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config
+      - ./skills:/app/skills
+    env_file:
+      - .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3001/api/v1/system/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Optional: Monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: nexusmind-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    profiles:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: nexusmind-grafana
+    ports:
+      - "3003:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    profiles:
+      - monitoring

@@ -1,0 +1,111 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: nexusmind_postgres
+    environment:
+      POSTGRES_USER: nexusmind
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+      POSTGRES_DB: nexusmind
+    volumes:
+      - /volume1/docker/nexusmind/postgres:/var/lib/postgresql/data
+    networks:
+      - nexusmind
+    restart: unless-stopped
+    mem_limit: 512m
+    cpus: '0.5'
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nexusmind"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: nexusmind_redis
+    command: redis-server --appendonly yes
+    volumes:
+      - /volume1/docker/nexusmind/redis:/data
+    networks:
+      - nexusmind
+    restart: unless-stopped
+    mem_limit: 256m
+    cpus: '0.25'
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    image: nexusmind:latest
+    container_name: nexusmind_backend
+    build:
+      context: ../../
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://nexusmind:${DB_PASSWORD:-changeme}@postgres:5432/nexusmind
+      - REDIS_URL=redis://redis:6379
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - DEBUG=False
+      - WORKERS=2
+      - LOG_LEVEL=INFO
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - /volume1/docker/nexusmind/data:/app/data
+      - /volume1/docker/nexusmind/logs:/app/logs
+      - /volume1/docker/nexusmind/skills:/app/skills
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    networks:
+      - nexusmind
+    restart: unless-stopped
+    mem_limit: 1g
+    cpus: '1'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    image: nexusmind-frontend:latest
+    container_name: nexusmind_frontend
+    build:
+      context: ../../dashboard
+      dockerfile: Dockerfile
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:${BACKEND_PORT:-8000}
+      - NEXT_PUBLIC_ENVIRONMENT=production
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    networks:
+      - nexusmind
+    restart: unless-stopped
+    mem_limit: 512m
+    cpus: '0.5'
+
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: nexusmind_watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_POLL_INTERVAL=86400
+      - WATCHTOWER_INCLUDE_STOPPED=true
+    restart: unless-stopped
+    mem_limit: 128m
+    cpus: '0.1'
+
+networks:
+  nexusmind:
+    driver: bridge

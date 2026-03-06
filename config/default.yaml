@@ -1,0 +1,86 @@
+# NexusMind Default Configuration
+nexusmind:
+  name: "NexusMind"
+  version: "0.1.0"
+  
+  # Server settings
+  server:
+    port: 3000
+    api_port: 3001
+    ws_port: 3002
+    host: "0.0.0.0"
+    cors:
+      enabled: true
+      origins: ["http://localhost:3000"]
+  
+  # AI Model defaults
+  models:
+    default_provider: "anthropic"
+    default_model: "claude-sonnet-4-6"
+    fallback_model: "gpt-4o-mini"
+    embedding_model: "text-embedding-3-small"
+    max_tokens: 4096
+    temperature: 0.7
+    streaming: true
+    
+    # Model routing rules
+    routing:
+      simple_chat: "claude-haiku-4-5"
+      complex_task: "claude-sonnet-4-6"
+      deep_reasoning: "claude-opus-4-6"
+      code_generation: "claude-sonnet-4-6"
+      vision: "gpt-4o"
+      long_context: "gemini-2.5-pro"
+      budget_mode: "gpt-4o-mini"
+    
+    # Token budgets
+    budgets:
+      daily_limit: 1000000
+      monthly_limit: 30000000
+      per_request_limit: 128000
+  
+  # Memory settings
+  memory:
+    working_memory_size: 50
+    short_term_days: 7
+    vector_dimensions: 1536
+    vector_top_k: 20
+    auto_consolidate: true
+    consolidation_interval: "0 3 * * *"  # 3 AM daily
+    max_memory_size_mb: 1000
+  
+  # Heartbeat settings  
+  heartbeat:
+    enabled: true
+    default_interval: "*/30 * * * *"
+    smart_scheduling: true
+    max_concurrent_tasks: 3
+    task_timeout: 300000  # 5 minutes
+    retry_on_failure: true
+    max_retries: 2
+  
+  # Security settings
+  security:
+    encryption_enabled: true
+    sandbox_enabled: true
+    audit_logging: true
+    max_skill_memory_mb: 256
+    max_skill_cpu_percent: 50
+    max_skill_timeout_ms: 60000
+    allowed_domains: []  # Empty = all allowed
+    blocked_domains: []
+  
+  # Dashboard settings
+  dashboard:
+    enabled: true
+    auth_required: true
+    session_timeout: 86400  # 24 hours
+  
+  # Logging
+  logging:
+    level: "info"
+    file_enabled: true
+    file_path: "data/logs/nexusmind.log"
+    max_file_size: "10m"
+    max_files: 5
+    console: true

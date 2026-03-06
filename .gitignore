@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.env
+data/db/*.sqlite
+data/vectors/
+data/logs/*.log
+*.tsbuildinfo
+.next/
+coverage/
+.DS_Store
